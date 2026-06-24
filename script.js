@@ -13,7 +13,7 @@ const CONFIG = {
   scrollOffset: 80,
   observerThreshold: 0.15,
   observerRootMargin: "0px 0px -100px 0px",
-  debugMode: false, // Cambiar a true para ver logs
+  debugMode: false,
 };
 
 // ============================================================================
