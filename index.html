@@ -1,235 +1,354 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="author" content="Rdeveloper" />
-    <meta name="description" content="Club Lobos Negros" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Club Lobos Negros</title>
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css" />
-    <link
-      rel="shortcut icon"
-      type="image/icon"
-      href="./img/nocheestrellada.jpeg"
-    />
-  </head>
-  <body>
-    <!-- Header -->
-    <header class="w3-top w3-round w3-padding">
-      <div class="w3-bar w3-white w3-round-large w3-card">
-        <a href="#" class="w3-bar-item">
-          <img src="./img/nocheestrellada.jpeg" alt="logo" />
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Club Lobos Negros - Tu club de taekwondo comunitario con entrenamiento personalizado, clases para niños y competitivo">
+  <meta name="keywords" content="taekwondo, club deportivo, entrenamiento, TKW, Barranquilla">
+  <meta name="theme-color" content="#1a1a1a">
+  <meta name="author" content="Club Lobos Negros">
+  <title>Club Lobos Negros - Entrenamiento de TKW | Barranquilla</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <!-- Header/Navegación -->
+  <header class="navbar" role="banner" data-scroll-spy>
+    <div class="container">
+      <div class="logo" aria-label="Club Lobos Negros">
+        <span class="logo-text">🐺 LOBOS NEGROS</span>
+      </div>
+      <nav class="nav-menu" role="navigation" aria-label="Navegación principal">
+        <a href="#nosotros" class="nav-link" data-smooth-scroll>Nosotros</a>
+        <a href="#servicios" class="nav-link" data-smooth-scroll>Servicios</a>
+        <a href="#beneficios" class="nav-link" data-smooth-scroll>Beneficios</a>
+        <a href="#contacto" class="nav-link" data-smooth-scroll>Contacto</a>
+      </nav>
+      <button class="mobile-menu-btn" aria-label="Menú móvil" aria-expanded="false" aria-controls="nav-menu">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero" role="region" aria-label="Bienvenida">
+    <div class="hero-content">
+      <div class="container">
+        <h1 class="hero-title" data-aos="fade-up">
+          Bienvenido a <span class="highlight">LOBOS NEGROS</span>
+        </h1>
+        <p class="hero-subtitle" data-aos="fade-up" data-aos-delay="200">
+          Tu club de taekwondo comunitario donde la pasión por el deporte, la disciplina y la superación personal se unen
+        </p>
+        <a href="#contacto" class="btn-primary btn-lg" data-smooth-scroll data-aos="fade-up" data-aos-delay="400">
+          Únete Ahora
+          <span class="btn-icon">→</span>
         </a>
-        <div class="w3-dropdown-hover">
-          <button
-            class="w3-padding-16 w3-button w3-round-large w3-large"
-            style="margin: 0px !important"
-          >
-            Contactanos
-          </button>
-          <div class="w3-dropdown-content w3-bar-block w3-round-large">
-            <a href="#" class="w3-bar-item w3-button w3-round-large"
-              >Facebook</a
-            >
-            <a href="#" class="w3-bar-item w3-button w3-round-large"
-              >Instagram</a
-            >
-            <a href="#" class="w3-bar-item w3-button w3-round-large"
-              >WhatsApp</a
-            >
+      </div>
+    </div>
+    <div class="hero-bg-elements">
+      <div class="bg-circle bg-circle-1"></div>
+      <div class="bg-circle bg-circle-2"></div>
+      <div class="bg-circle bg-circle-3"></div>
+    </div>
+  </section>
+
+  <!-- Sección Nosotros -->
+  <section class="about" id="nosotros" role="region" aria-label="Sobre el club">
+    <div class="container">
+      <h2 class="section-title" data-aos="fade-up">Sobre Nosotros</h2>
+      <div class="about-content">
+        <div class="about-text" data-aos="fade-right">
+          <h3 class="about-subtitle">¿Quiénes somos?</h3>
+          <p>
+            Lobos Negros es un club de taekwondo comunitario dedicado a formar atletas de excelencia y ciudadanos con valores de respeto, disciplina y perseverancia. Nos especializamos en entrenamiento personalizado adaptado a cada nivel y edad.
+          </p>
+          <p>
+            Nuestro equipo de instructores certificados trabaja con pasión para ayudarte a alcanzar tus metas, ya seas principiante, deportista recreativo o competidor de alto nivel.
+          </p>
+          <p>
+            Creemos que el taekwondo es más que un deporte: es una filosofía de vida que te transforma física y mentalmente.
+          </p>
+        </div>
+        <div class="about-image" data-aos="fade-left">
+          <div class="image-placeholder">
+            <span class="placeholder-icon">📷</span>
+            <span class="placeholder-text">Agregar imagen del club</span>
           </div>
         </div>
       </div>
-    </header>
-    <!-- Hero -->
-    <section class="w3-black" id="hero">
-      <div class="w3-container w3-padding-64">
-        <div class="w3-center w3-margin-top w3-padding-64">
-          <h1
-            class="w3-animate-opacity w3-xxlarge"
-            style="text-shadow: 1px 1px 0 #444"
-          >
-            Club lobos negros
-          </h1>
-          <p
-            class="w3-animate-opacity w3-large"
-            style="text-shadow: 1px 1px 0 #444"
-          >
-            Encarnamos cortesía, integridad, y autocontrol, superando desafíos
-            con el espíritu indomable que nos caracteriza.
+    </div>
+  </section>
+
+  <!-- Sección Servicios -->
+  <section class="services" id="servicios" role="region" aria-label="Servicios ofrecidos">
+    <div class="container">
+      <h2 class="section-title" data-aos="fade-up">Nuestros Servicios</h2>
+      <div class="services-grid">
+        <article class="service-card" data-aos="fade-up" data-aos-delay="100">
+          <div class="service-icon" aria-label="Entrenamiento Personal">👨‍🏫</div>
+          <h3>Entrenamiento Personal</h3>
+          <p>
+            Sesiones uno a uno diseñadas específicamente para tu nivel, objetivos y ritmo de aprendizaje. Perfecto para quienes desean atención personalizada.
+          </p>
+        </article>
+
+        <article class="service-card" data-aos="fade-up" data-aos-delay="200">
+          <div class="service-icon" aria-label="Clases Infantiles">👶</div>
+          <h3>Clases Infantiles</h3>
+          <p>
+            Programas diseñados para niños donde aprenden técnica, disciplina y confianza en sí mismos de forma divertida y segura.
+          </p>
+        </article>
+
+        <article class="service-card" data-aos="fade-up" data-aos-delay="300">
+          <div class="service-icon" aria-label="Entrenamiento Competitivo">🎯</div>
+          <h3>Entrenamiento Competitivo</h3>
+          <p>
+            Para atletas que desean competir. Preparación intensiva en técnica, condición física y estrategia de combate.
+          </p>
+        </article>
+
+        <article class="service-card" data-aos="fade-up" data-aos-delay="400">
+          <div class="service-icon" aria-label="Clases Grupales">👥</div>
+          <h3>Clases Grupales</h3>
+          <p>
+            Entrenamientos en grupo que fomentan la camaradería, el apoyo mutuo y el aprendizaje colaborativo en un ambiente dinámico.
+          </p>
+        </article>
+
+        <article class="service-card" data-aos="fade-up" data-aos-delay="500">
+          <div class="service-icon" aria-label="Acondicionamiento Físico">💪</div>
+          <h3>Acondicionamiento Físico</h3>
+          <p>
+            Mejora tu resistencia, flexibilidad y fuerza con programas complementarios diseñados para potenciar tu desempeño.
+          </p>
+        </article>
+
+        <article class="service-card" data-aos="fade-up" data-aos-delay="600">
+          <div class="service-icon" aria-label="Cinturones y Certificaciones">🥋</div>
+          <h3>Cinturones y Certificaciones</h3>
+          <p>
+            Acompañamiento completo en tu progresión de cinturones, desde blanco hasta negro, con evaluaciones profesionales.
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Beneficios -->
+  <section class="benefits" id="beneficios" role="region" aria-label="Beneficios del club">
+    <div class="container">
+      <h2 class="section-title" data-aos="fade-up">¿Por qué entrenar con nosotros?</h2>
+      <div class="benefits-grid">
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="100">
+          <h3>✓ Instructores Certificados</h3>
+          <p>
+            Equipo de profesionales con experiencia y certificaciones en taekwondo deportivo y pedagógico.
+          </p>
+        </div>
+
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="200">
+          <h3>✓ Ambiente Seguro</h3>
+          <p>
+            Instalaciones modernas, equipadas y seguras. Compromiso total con la integridad física de nuestros deportistas.
+          </p>
+        </div>
+
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="300">
+          <h3>✓ Comunidad Inclusiva</h3>
+          <p>
+            Para todas las edades y niveles. Aceptamos a cualquiera dispuesto a trabajar con disciplina y respeto.
+          </p>
+        </div>
+
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="400">
+          <h3>✓ Desarrollo Integral</h3>
+          <p>
+            No solo técnica: fortalecemos carácter, autoconfianza, respeto y liderazgo en nuestros atletas.
+          </p>
+        </div>
+
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="500">
+          <h3>✓ Precios Accesibles</h3>
+          <p>
+            Planes flexibles y precios justos. Queremos que el taekwondo sea accesible para toda la comunidad.
+          </p>
+        </div>
+
+        <div class="benefit-item" data-aos="fade-up" data-aos-delay="600">
+          <h3>✓ Seguimiento Personalizado</h3>
+          <p>
+            Evaluamos tu progreso constantemente y ajustamos planes para asegurar que avances hacia tus objetivos.
           </p>
         </div>
       </div>
-    </section>
-    <!-- Ubication -->
-    <section class="w3-padding-16" id="ubicacion">
-      <div class="w3-row-padding w3-center">
-        <h2 class="w3-xxlarge">Ubicaciones</h2>
-        <div class="" id="ubications">
-          <!-- Ubication 1 -->
-          <div
-            class="w3-card w3-container w3-hover-shadow w3-padding w3-margin-bottom w3-round-large"
-          >
-            <img
-              src="./img/nocheestrellada.jpeg"
-              alt=""
-              class="w3-image w3-round-large"
-            />
-            <p
-              class="w3-xlarge"
-              style="margin-bottom: 0px !important; margin-top: 15px !important"
-            >
-              Ubicacion
-            </p>
-            <p class="w3-medium w3-opacity" style="margin-top: 0px">
-              Detalles de la ubicaciones
-            </p>
-          </div>
-          <!-- Ubication 2 -->
-          <div
-            class="w3-card w3-container w3-hover-shadow w3-padding w3-margin-bottom w3-round-large"
-          >
-            <img
-              src="./img/nocheestrellada.jpeg"
-              alt=""
-              class="w3-image w3-round-large"
-            />
-            <p
-              class="w3-xlarge"
-              style="margin-bottom: 0px !important; margin-top: 15px !important"
-            >
-              Ubicacion
-            </p>
-            <p class="w3-medium w3-opacity" style="margin-top: 0px">
-              Detalles de la ubicaciones
-            </p>
-          </div>
-          <!-- Ubication 3 -->
-          <div
-            class="w3-card w3-container w3-hover-shadow w3-padding w3-margin-bottom w3-round-large"
-          >
-            <img
-              src="./img/nocheestrellada.jpeg"
-              alt=""
-              class="w3-image w3-round-large"
-            />
-            <p
-              class="w3-xlarge"
-              style="margin-bottom: 0px !important; margin-top: 15px !important"
-            >
-              Ubicacion
-            </p>
-            <p class="w3-medium w3-opacity" style="margin-top: 0px">
-              Detalles de la ubicaciones
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- About -->
-    <section id="about">
-      <div class="w3-container w3-padding-64 w3-black w3-large">
-        <div class="w3-content">
-          <h3>Sobre nosotros</h3>
-          <p class="w3-opacity">
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Dolorum
-            dicta, quod ea autem, maxime doloremque ipsa velit quia dignissimos
-            similique id, nostrum qui saepe inventore ipsam dolor dolores ipsum
-            corporis.
+    </div>
+  </section>
+
+  <!-- Sección Público Objetivo -->
+  <section class="target-audience" role="region" aria-label="A quién servimos">
+    <div class="container">
+      <h2 class="section-title" data-aos="fade-up">¿A quién servimos?</h2>
+      <div class="audience-grid">
+        <article class="audience-card" data-aos="fade-up" data-aos-delay="100">
+          <h3>
+            <span class="audience-icon">👨‍👩‍👧‍👦</span>
+            <span>Familias Completas</span>
+          </h3>
+          <p>
+            Creemos en entrenar en familia. Padres e hijos pueden entrenar juntos, aprendiendo valores de disciplina y dedicación mientras fortalecen sus vínculos.
           </p>
-        </div>
+        </article>
+
+        <article class="audience-card" data-aos="fade-up" data-aos-delay="200">
+          <h3>
+            <span class="audience-icon">🎓</span>
+            <span>Personas Jóvenes</span>
+          </h3>
+          <p>
+            Adolescentes y adultos jóvenes que buscan fortalecer su cuerpo, mente y espíritu. Ideal para quienes quieren un desafío y crecimiento personal.
+          </p>
+        </article>
+
+        <article class="audience-card" data-aos="fade-up" data-aos-delay="300">
+          <h3>
+            <span class="audience-icon">🥇</span>
+            <span>Atletas Competitivos</span>
+          </h3>
+          <p>
+            Para quienes tienen el fuego de la competencia. Preparación seria y profesional para torneos locales, nacionales e internacionales.
+          </p>
+        </article>
+
+        <article class="audience-card" data-aos="fade-up" data-aos-delay="400">
+          <h3>
+            <span class="audience-icon">❤️</span>
+            <span>Apasionados del Deporte</span>
+          </h3>
+          <p>
+            Personas de cualquier edad que desean encontrar una comunidad, mejorar su salud y vivir la filosofía del taekwondo en su día a día.
+          </p>
+        </article>
       </div>
-      <div class="w3-display-container" style="width: 100vw">
-        <img
-          class="mySlides w3-animate-opacity"
-          src="./img/nocheestrellada.jpeg"
-          style="width: 100%"
-        />
-        <img
-          class="mySlides w3-animate-opacity"
-          src="./img/nocheestrellada.jpeg"
-          style="width: 100%"
-        />
-        <img
-          class="mySlides w3-animate-opacity"
-          src="./img/nocheestrellada.jpeg"
-          style="width: 100%"
-        />
-        <a class="w3-display-left w3-margin-left" onclick="plusDivs(-1)"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24"
-            viewBox="0 -960 960 960"
-            width="24"
-            fill="white"
-          >
-            <path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z" /></svg
-        ></a>
-        <a class="w3-display-right w3-margin-right" onclick="plusDivs(+1)"
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            height="24"
-            viewBox="0 -960 960 960"
-            width="24"
-            fill="white"
-          >
-            <path
-              d="m321-80-71-71 329-329-329-329 71-71 400 400L321-80Z"
-            /></svg
-        ></a>
-      </div>
-    </section>
-    <!-- Contact -->
-    <section class="w3-container">
-      <div class="w3-padding-32 w3-margin">
-        <div
-          class="w3-border w3-card w3-container w3-hover-shadow w3-padding w3-margin-bottom w3-round-large"
-        >
-          <img
-            src="./img/nocheestrellada.jpeg"
-            alt="profile"
-            class="w3-image w3-round-large"
-            id="profile"
-          />
-          <div class="w3-container">
-            <p class="w3-margin-top">lorem ipsum
-            <p />
-            <p class="w3-opacity">
-              Lorem ipsum dolor sit amet consectetur, adipisicing elit. Labore,
-              fuga.
-            </p>
-          </div>
-          <div class="w3-container">
-            <div>
-              <p>Integrantes principales</p>
-            </div>
-            <div class="w3-padding" id="teamMembers">
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-              <img src="./img/nocheestrellada.jpeg" alt="" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <!-- Footer -->
-    <footer class="w3-center w3-black w3-padding">
-      <p>
-        Powered by
-        <a
-          href="https://www.w3schools.com/w3css/default.asp"
-          title="W3.CSS"
-          target="_blank"
-          class="w3-hover-text-green"
-          >w3.css</a
-        >
+    </div>
+  </section>
+
+  <!-- Sección CTA y Contacto -->
+  <section class="cta-section" id="contacto" role="region" aria-label="Contacto y redes sociales">
+    <div class="cta-bg-elements">
+      <div class="cta-circle cta-circle-1"></div>
+      <div class="cta-circle cta-circle-2"></div>
+    </div>
+    <div class="container" style="position: relative; z-index: 2;">
+      <h2 class="section-title" data-aos="fade-up">¡Estamos Listos!</h2>
+      <p class="cta-subtitle" data-aos="fade-up" data-aos-delay="100">
+        ¿Listo para formar parte de la familia Lobos Negros? Conecta con nosotros a través de nuestras redes sociales y comienza tu viaje hoy.
       </p>
-    </footer>
-  </body>
-  <script src="script.js"></script>
+
+      <div class="edit-info" data-aos="fade-up" data-aos-delay="200">
+        🔗 <strong>Agregue sus enlaces de redes sociales</strong> (WhatsApp, Instagram, Facebook) reemplazando las URLs en los botones abajo
+      </div>
+
+      <div class="social-links" data-aos="fade-up" data-aos-delay="300">
+        <a href="https://wa.me/your-number" class="social-link" title="WhatsApp" aria-label="Contactar por WhatsApp" target="_blank" rel="noopener noreferrer">
+          <span class="social-icon">💬</span>
+          <span class="social-tooltip">WhatsApp</span>
+        </a>
+        <a href="https://instagram.com/your-profile" class="social-link" title="Instagram" aria-label="Seguir en Instagram" target="_blank" rel="noopener noreferrer">
+          <span class="social-icon">📸</span>
+          <span class="social-tooltip">Instagram</span>
+        </a>
+        <a href="https://facebook.com/your-page" class="social-link" title="Facebook" aria-label="Seguir en Facebook" target="_blank" rel="noopener noreferrer">
+          <span class="social-icon">f</span>
+          <span class="social-tooltip">Facebook</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+<footer role="contentinfo">
+  <!-- Sección Google Maps -->
+  <section class="footer-maps-section">
+    <div class="container">
+      <div class="maps-wrapper">
+        <!-- Columna Maps -->
+        <div class="maps-column">
+          <div class="map-container" id="map-container">
+            <div id="map"></div>
+            <div class="map-loading">
+              <p>Cargando ubicación...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columna Info -->
+        <div class="info-column">
+          <div class="location-card">
+            <h3 class="location-title">📍 Ubicación de Entrenamiento</h3>
+            
+            <div class="location-detail">
+              <h4>Parque La Inmaculada</h4>
+              <p class="location-address">
+                Calle 37c #5a58<br>
+                Barrio Las Palmas<br>
+                Sur Oriente, Barranquilla<br>
+                Atlántico, Colombia
+              </p>
+            </div>
+
+            <div class="location-detail">
+              <h4>🕐 Horario de Entrenamiento</h4>
+              <p>
+                Lunes a Viernes: 4:00 PM - 7:00 PM<br>
+                Sábado: 9:00 AM - 12:00 PM<br>
+                Domingo: Cerrado
+              </p>
+            </div>
+
+            <div class="location-actions">
+              <a href="https://www.google.com/maps/search/Parque+La+Inmaculada+Las+Palmas+Barranquilla/@10.9575,-74.8035,17z" 
+                 class="btn-directions" 
+                 target="_blank" 
+                 rel="noopener noreferrer">
+                📍 Cómo Llegar
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Redes Sociales -->
+  <section class="footer-social-section">
+    <div class="container">
+      <h3>Síguenos en Redes Sociales</h3>
+      <div class="social-links-footer">
+        <a href="https://wa.me/your-number" class="social-link-footer" title="WhatsApp" target="_blank" rel="noopener noreferrer">
+          <span>💬 WhatsApp</span>
+        </a>
+        <a href="https://instagram.com/your-profile" class="social-link-footer" title="Instagram" target="_blank" rel="noopener noreferrer">
+          <span>📸 Instagram</span>
+        </a>
+        <a href="https://facebook.com/your-page" class="social-link-footer" title="Facebook" target="_blank" rel="noopener noreferrer">
+          <span>f Facebook</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sección Copyright -->
+  <section class="footer-bottom">
+    <div class="container">
+      <p class="footer-text">
+        &copy; <span id="year"></span> Club Lobos Negros. Todos los derechos reservados. | Pasión, Disciplina, Superación
+      </p>
+    </div>
+  </section>
+</footer>
+</body>
 </html>
