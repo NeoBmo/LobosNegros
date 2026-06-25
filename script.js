@@ -631,7 +631,7 @@ class GoogleMapsIntegration {
   constructor() {
     this.map = null;
     this.marker = null;
-    this.apiKey = "AIzaSyD4PoPBYW96ycDHbVeueYTk5d1TuzlWpec";
+    this.apiKey = "AIzaSyCaAJC1ufdVWEXLqSRBsjDUDwcyuAPZEK8";
     this.mapContainer = document.getElementById("map-container");
     this.mapElement = document.getElementById("map");
     this.isLoaded = false;
