@@ -191,7 +191,11 @@ button {
   transition: opacity var(--t-slow), transform var(--t-slow);
 }
 
-[data-aos] {
+/* Red de seguridad para cuando NO hay JS.
+   Debe quedar acotada a `html:not(.js)`: con `forwards` y sin ese alcance se
+   revelaba TODA la pagina a los 2s y anulaba las animaciones de scroll. El
+   script anade la clase `js` a <html> antes de que venza el retardo. */
+html:not(.js) [data-aos] {
   animation: aosFallback 0.1s ease-in-out 2s forwards;
 }
 
@@ -563,6 +567,11 @@ body.menu-open {
   transform: translate3d(var(--dock-x, 0px), var(--dock-y, 0px), 0)
     scale(var(--dock-s, 1));
   transform-origin: center bottom;
+}
+
+/* will-change solo mientras el dock esta activo: mantenerlo permanente obliga
+   al compositor a reservar capas para siempre y consume memoria sin motivo. */
+.team-group.is-active .team-item {
   will-change: transform;
 }
 
@@ -724,6 +733,10 @@ body.menu-open {
   height: 600px;
   background: radial-gradient(circle, rgba(219, 26, 26, 0.05) 0%, transparent 70%);
   animation: float 30s ease-in-out infinite;
+
+  /* El JS alterna --anim-play en .benefits para detener el degradado cuando
+     la sección no está en pantalla. */
+  animation-play-state: var(--anim-play, running);
 }
 
 .benefits h2 {
@@ -807,8 +820,12 @@ body.menu-open {
   display: flex;
   gap: var(--space-6);
   width: 100%;
-  will-change: transform;
   touch-action: pan-y;
+}
+
+/* will-change solo mientras el marquee esta corriendo (lo alterna el JS). */
+.testimonials-track.is-running {
+  will-change: transform;
 }
 
 .testimonial-slide {
@@ -960,6 +977,12 @@ body.menu-open {
   animation-delay: 2s;
 }
 
+/* Debe ir DESPUES de los `animation:` de arriba: el shorthand resetea
+   animation-play-state. El JS alterna --anim-play en .contact-social. */
+.contact-circle {
+  animation-play-state: var(--anim-play, running);
+}
+
 .contact-inner {
   position: relative;
   z-index: 2;
@@ -1003,7 +1026,6 @@ body.menu-open {
   color: var(--color-white);
   transition: transform var(--t-base), background var(--t-base),
     color var(--t-base), box-shadow var(--t-base);
-  will-change: transform;
 }
 
 .social-link:hover {

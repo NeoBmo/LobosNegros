@@ -64,7 +64,13 @@ class Navigation {
         e.preventDefault();
         this.smoothScroll(targetSection);
         this.closeMenu();
-        history.replaceState(null, "", targetId);
+        try {
+          // Sobre file:// el navegador lanza SecurityError al cambiar la URL,
+          // y el sitio debe funcionar abierto directamente desde disco.
+          history.replaceState(null, "", targetId);
+        } catch (error) {
+          logger.warn(`No se pudo actualizar el historial: ${error.message}`);
+        }
       });
     });
 
@@ -107,58 +113,63 @@ class Navigation {
     const delta = scrollY - this.lastScrollY;
     this.lastScrollY = scrollY;
 
+    // MEDICIONES primero. Leer una propiedad de layout (offsetTop,
+    // clientHeight) despues de escribir una clase fuerza un reflow sincrono.
+    // El codigo anterior alternaba lectura y escritura en cada frame, asi que
+    // hacer scroll provocaba layout thrashing continuo.
     const heroHeight = this.heroSection ? this.heroSection.offsetHeight : 400;
     const isPastHero = scrollY >= heroHeight * 0.5;
+    const activeSectionId = this.computeActiveSectionId(scrollY);
 
-    this.navbar.classList.toggle("scrolled", isPastHero);
+    // A partir de aqui, solo escrituras al DOM.
+    const menuOpen = this.navMenu?.classList.contains("active");
+    let shouldShow = false;
 
-    if (this.navMenu?.classList.contains("active")) {
-      this.navbar.classList.add("nav-visible");
-      return this.updateActiveLink();
-    }
-
-    if (!isPastHero) {
+    if (menuOpen) {
+      shouldShow = true;
+    } else if (!isPastHero) {
       this.downAccum = 0;
       this.hasShownNavbar = false;
-      this.navbar.classList.remove("nav-visible");
-      return this.updateActiveLink();
-    }
-
-    if (delta < -3) {
+    } else if (delta < -3) {
       this.downAccum = 0;
-      this.navbar.classList.add("nav-visible");
+      shouldShow = true;
     } else if (delta > 3) {
       if (!this.hasShownNavbar) {
         this.hasShownNavbar = true;
-        this.navbar.classList.add("nav-visible");
+        shouldShow = true;
       } else {
         this.downAccum += delta;
-        if (this.downAccum >= CONFIG.navHideDistance) {
-          this.navbar.classList.remove("nav-visible");
-        }
+        shouldShow = this.downAccum < CONFIG.navHideDistance;
       }
-    } else if (!this.hasShownNavbar) {
+    } else {
       this.hasShownNavbar = true;
-      this.navbar.classList.add("nav-visible");
+      shouldShow = true;
     }
 
-    this.updateActiveLink();
+    this.navbar.classList.toggle("scrolled", isPastHero);
+    this.navbar.classList.toggle("nav-visible", shouldShow);
+    this.applyActiveLink(activeSectionId);
   }
 
-  updateActiveLink() {
+  computeActiveSectionId(scrollY) {
+    const probe = scrollY + CONFIG.scrollOffset + 10;
     let currentSectionId = "";
-    const scrollPosition = window.scrollY + CONFIG.scrollOffset + 10;
 
-    this.sections.forEach((section) => {
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.clientHeight;
-
-      if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+    for (let i = 0; i < this.sections.length; i += 1) {
+      const section = this.sections[i];
+      const top = section.offsetTop;
+      const height = section.clientHeight;
+      if (probe >= top && probe < top + height) {
         currentSectionId = section.getAttribute("id");
       }
-    });
+    }
 
-    this.navLinks.forEach((link) => {
+    return currentSectionId;
+  }
+
+  applyActiveLink(currentSectionId) {
+    for (let i = 0; i < this.navLinks.length; i += 1) {
+      const link = this.navLinks[i];
       const isActive = link.getAttribute("href") === `#${currentSectionId}`;
       link.classList.toggle("active", isActive);
       if (isActive) {
@@ -166,7 +177,7 @@ class Navigation {
       } else {
         link.removeAttribute("aria-current");
       }
-    });
+    }
   }
 
   smoothScroll(element) {
@@ -236,6 +247,7 @@ class HeroParticles {
     for (let i = 0; i < count; i++) {
       const size = Math.random() * (maxSize - minSize) + minSize;
       const depth = (size - minSize) / (maxSize - minSize);
+      const alpha = 0.35 + depth * 0.85;
       this.particles.push({
         x: Math.random() * this.width,
         y: Math.random() * this.height,
@@ -244,7 +256,11 @@ class HeroParticles {
         baseVy: -(0.25 + depth * 0.7),
         vx: 0,
         vy: 0,
-        alpha: 0.35 + depth * 0.85,
+        alpha,
+        // El color no cambia nunca. Antes se armaba una cadena nueva por
+        // particula y frame (~90 por frame, unas 5400 por segundo).
+        color: `rgba(219, 26, 26, ${alpha})`,
+        staticColor: `rgba(219, 26, 26, ${alpha * 0.7})`,
         sinOffset: Math.random() * Math.PI * 2,
         sinSpeed: 0.01 + (1 - depth) * 0.015,
         sinAmp: 0.2 + depth * 0.35,
@@ -253,7 +269,16 @@ class HeroParticles {
   }
 
   attachEventListeners() {
-    window.addEventListener("resize", throttle(() => { this.setupCanvas(); this.createParticles(); }, 200), { passive: true });
+    window.addEventListener("resize", throttle(() => {
+      this.setupCanvas();
+      this.createParticles();
+      // setupCanvas borra el canvas al reasignar canvas.width. Con movimiento
+      // reducido no hay rAF que repinte, asi que el lienzo se quedaba en
+      // blanco para siempre tras cualquier cambio de tamano de ventana.
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        this.renderStaticFrame();
+      }
+    }, 200), { passive: true });
     if (!this.hero) return;
     this.hero.addEventListener("mousemove", (e) => {
       const rect = this.hero.getBoundingClientRect();
@@ -301,7 +326,7 @@ class HeroParticles {
     this.ctx.clearRect(0, 0, this.width, this.height);
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
-      this.ctx.fillStyle = `rgba(219, 26, 26, ${p.alpha * 0.7})`;
+      this.ctx.fillStyle = p.staticColor;
       this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
   }
@@ -354,7 +379,7 @@ class HeroParticles {
       if (p.x < -20) p.x = this.width + 20;
       if (p.x > this.width + 20) p.x = -20;
 
-      this.ctx.fillStyle = `rgba(219, 26, 26, ${p.alpha})`;
+      this.ctx.fillStyle = p.color;
       this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
     this.animationFrameId = requestAnimationFrame(() => this.render());
@@ -467,18 +492,39 @@ class TeamDock {
     this.initState();
     this.writeTargets();
     this.bindEvents();
+    this.preloadMemberPhotos();
   }
 
   setupImages() {
-    this.items.forEach((item) => {
-      const avatarImg = item.querySelector(".member-avatar-photo");
-      if (avatarImg) {
-        avatarImg.addEventListener("load", () => avatarImg.classList.add("is-loaded"));
-      }
-    });
-
     if (this.mainImage) {
       this.mainImage.addEventListener("load", () => this.mainImage.classList.add("loaded"));
+    }
+  }
+
+  // Antes cada hover sobre un avatar disparaba la descarga de su foto en el
+  // momento, y como se quita la clase `loaded` mientras carga, se veía un
+  // parpadeo. Se precargan en reposo para que ya estén en caché al llegar el hover.
+  preloadMemberPhotos() {
+    const photos = [];
+    for (let i = 0; i < this.items.length; i += 1) {
+      const src = this.items[i].getAttribute("data-photo");
+      if (src && src !== this.groupPhoto && photos.indexOf(src) === -1) {
+        photos.push(src);
+      }
+    }
+    if (!photos.length) return;
+
+    const warm = () => {
+      for (let i = 0; i < photos.length; i += 1) {
+        const img = new Image();
+        img.src = photos[i];
+      }
+    };
+
+    if ("requestIdleCallback" in window) {
+      requestIdleCallback(warm, { timeout: 3000 });
+    } else {
+      window.setTimeout(warm, 1200);
     }
   }
 
@@ -539,9 +585,11 @@ class TeamDock {
     if (!this.reducedMotion && window.matchMedia("(hover: hover)").matches) {
       this.group.addEventListener("pointerenter", () => {
         this.overGroup = true;
+        this.group.classList.add("is-active");
       });
       this.group.addEventListener("pointerleave", () => {
         this.overGroup = false;
+        this.group.classList.remove("is-active");
         this.reset();
       });
       this.group.addEventListener("pointermove", (event) => {
@@ -556,11 +604,18 @@ class TeamDock {
       }
     });
 
-    window.addEventListener("resize", () => {
-      this.measure();
-      this.initState();
-      this.writeTargets();
-    });
+    // Sin throttle: measure() lee offsetLeft/offsetWidth de cada integrante,
+    // y eso fuerza reflow en cada evento de resize mientras se arrastra la
+    // ventana.
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        this.measure();
+        this.initState();
+        this.writeTargets();
+      }, 150),
+      { passive: true }
+    );
   }
 
   applyDock(pointerX) {
@@ -766,6 +821,27 @@ class Accordion {
       if (!header) return;
       header.addEventListener("click", () => this.toggle(item));
     });
+
+    // El alto se fija en pixeles al abrir. Si la ventana cambia de ancho el
+    // texto refluye y el maxHeight viejo recorta el contenido, asi que hay que
+    // recalcularlo para los paneles que sigan abiertos.
+    window.addEventListener(
+      "resize",
+      throttle(() => this.remeasureOpen(), 200),
+      { passive: true }
+    );
+  }
+
+  remeasureOpen() {
+    this.items.forEach((item) => {
+      if (!item.classList.contains("active")) return;
+      const body = item.querySelector(".accordion-body");
+      if (!body) return;
+      body.style.maxHeight = "0px";
+      requestAnimationFrame(() => {
+        body.style.maxHeight = body.scrollHeight + "px";
+      });
+    });
   }
 
   toggle(item) {
@@ -896,6 +972,9 @@ class TestimonialsMarquee {
   run() {
     this.stop();
     if (this.reducedMotionQuery.matches || !this.visible || this.hovered || this.dragging) return;
+    // will-change solo mientras el track se esta moviendo: mantener la capa
+    // reservada cuando el marquee esta parado solo consume memoria.
+    this.track.classList.add("is-running");
     const step = () => {
       this.offset = this.wrap(this.offset + this.speed);
       this.render();
@@ -909,6 +988,7 @@ class TestimonialsMarquee {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }
+    if (this.track) this.track.classList.remove("is-running");
   }
 }
 
@@ -920,6 +1000,29 @@ class VisualEffects {
 
   init() {
     this.addMouseFollowEffect();
+    this.pauseOffscreenAnimations();
+  }
+
+  // Los keyframes `float` de .benefits::before (600px) y de los dos circles
+  // del contacto (500px y 400px) son degradados radiales grandes. Tenian
+  // `infinite` sin pausa, asi queseguian compositando aunque la seccion no
+  // estuviera en pantalla.
+  pauseOffscreenAnimations() {
+    if (!("IntersectionObserver" in window)) return;
+    const targets = document.querySelectorAll(".benefits, .contact-social");
+    if (!targets.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      for (let i = 0; i < entries.length; i += 1) {
+        const entry = entries[i];
+        entry.target.style.setProperty(
+          "--anim-play",
+          entry.isIntersecting ? "running" : "paused"
+        );
+      }
+    }, { threshold: 0 });
+
+    for (let i = 0; i < targets.length; i += 1) observer.observe(targets[i]);
   }
 
   addMouseFollowEffect() {
@@ -1153,6 +1256,11 @@ class App {
   bootstrap() {
     if (this.initialized) return;
     this.initialized = true;
+
+    // Marca de JS activo. Acota el fallback `aosFallback` del CSS a
+    // `html:not(.js)`; sin esta clase el fallback revelaba toda la pagina a
+    // los 2 segundos y anulaba las animaciones de scroll.
+    document.documentElement.classList.add("js");
 
     try {
       new Navigation();
