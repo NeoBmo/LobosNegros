@@ -85,10 +85,17 @@ class Navigation {
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.navMenu?.classList.contains("active")) {
-        this.closeMenu();
-        this.mobileMenuBtn?.focus();
+      if (!this.navMenu?.classList.contains("active")) return;
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.closeMenu({ restoreFocus: true });
+        return;
       }
+
+      // Sin trampa de foco, Tab sale del menú hacia la página de fondo, que el
+      // scrim deja oculta pero no inaccesible.
+      if (e.key === "Tab") this.trapFocus(e);
     });
 
     window.addEventListener("resize", throttle(() => {
@@ -194,14 +201,55 @@ class Navigation {
     const isActive = this.navMenu.classList.toggle("active");
     this.mobileMenuBtn.setAttribute("aria-expanded", isActive);
     document.body.classList.toggle("menu-open", isActive);
-    if (isActive) this.navbar?.classList.add("nav-visible");
+
+    if (isActive) {
+      this.navbar?.classList.add("nav-visible");
+      // El foco entra en el menú. Sin esto, el primer Tab tras abrir salta al
+      // skip-link y recorre la página que el scrim ya no deja leer.
+      //
+      // Se difiere dos frames porque el panel arranca en `visibility: hidden`
+      // y la transición dura 200ms: enfocar un elemento invisible es un no-op,
+      // y por eso el foco se quedaba en <body>.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          const firstLink = this.navMenu.querySelector("a");
+          if (firstLink) firstLink.focus();
+        });
+      });
+    }
   }
 
-  closeMenu() {
+  // El botón forma parte del ciclo para poder alcanzarlo con Shift+Tab.
+  trapFocus(event) {
+    const items = [this.mobileMenuBtn].concat(
+      Array.from(this.navMenu.querySelectorAll("a, button"))
+    );
+    if (!items.length) return;
+
+    const first = items[0];
+    const last = items[items.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && active === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  closeMenu({ restoreFocus = false } = {}) {
     if (!this.navMenu || !this.mobileMenuBtn) return;
+    const wasOpen = this.navMenu.classList.contains("active");
+
     this.navMenu.classList.remove("active");
     this.mobileMenuBtn.setAttribute("aria-expanded", "false");
     document.body.classList.remove("menu-open");
+
+    // Solo se recupera el foco si el menú se cierra sin navegar: tras pulsar
+    // un enlace, robar el foco devolvería al usuario arriba del todo.
+    if (restoreFocus && wasOpen) this.mobileMenuBtn.focus();
   }
 }
 
@@ -451,8 +499,6 @@ class TeamDock {
   constructor() {
     this.group = document.querySelector(".team-group");
     this.items = this.group ? Array.from(this.group.querySelectorAll(".team-item")) : [];
-    this.mainImage = document.querySelector("#about-main");
-    this.groupPhoto = this.mainImage ? this.mainImage.getAttribute("src") : "";
 
     if (!this.group || this.items.length === 0) return;
 
@@ -487,45 +533,10 @@ class TeamDock {
       if (this.reducedMotion) this.reset();
     });
 
-    this.setupImages();
     this.measure();
     this.initState();
     this.writeTargets();
     this.bindEvents();
-    this.preloadMemberPhotos();
-  }
-
-  setupImages() {
-    if (this.mainImage) {
-      this.mainImage.addEventListener("load", () => this.mainImage.classList.add("loaded"));
-    }
-  }
-
-  // Antes cada hover sobre un avatar disparaba la descarga de su foto en el
-  // momento, y como se quita la clase `loaded` mientras carga, se veía un
-  // parpadeo. Se precargan en reposo para que ya estén en caché al llegar el hover.
-  preloadMemberPhotos() {
-    const photos = [];
-    for (let i = 0; i < this.items.length; i += 1) {
-      const src = this.items[i].getAttribute("data-photo");
-      if (src && src !== this.groupPhoto && photos.indexOf(src) === -1) {
-        photos.push(src);
-      }
-    }
-    if (!photos.length) return;
-
-    const warm = () => {
-      for (let i = 0; i < photos.length; i += 1) {
-        const img = new Image();
-        img.src = photos[i];
-      }
-    };
-
-    if ("requestIdleCallback" in window) {
-      requestIdleCallback(warm, { timeout: 3000 });
-    } else {
-      window.setTimeout(warm, 1200);
-    }
   }
 
   initState() {
@@ -550,23 +561,18 @@ class TeamDock {
     this.items.forEach((item) => {
       const avatar = item.querySelector(".team-avatar");
 
-      if (!this.reducedMotion && window.matchMedia("(hover: hover)").matches) {
-        avatar.addEventListener("mouseenter", () => this.preview(item));
-        avatar.addEventListener("mouseleave", () => this.restore());
-      }
-
+      // El hover del grupo ya magnifica vía `pointermove` + `applyDock`, así
+      // que no hace falta un manejador por avatar.
       avatar.addEventListener("focusin", () => {
         const index = this.items.indexOf(item);
         this.applyDock(this.baseCenters[index]);
-        this.preview(item);
       });
       avatar.addEventListener("focusout", (event) => {
         if (event.relatedTarget?.closest?.(".team-group")) return;
         if (!this.overGroup) this.reset();
-        else this.restore();
       });
 
-      // Touch devices: tap selects an avatar and shows its preview
+      // Touch devices: tap selects an avatar and magnifies it
       item.addEventListener("pointerdown", (event) => {
         if (window.matchMedia("(hover: hover)").matches) return;
         event.preventDefault();
@@ -576,7 +582,6 @@ class TeamDock {
           this.clearTouch();
           this.touchItem = item;
           item.classList.add("dock-active");
-          this.preview(item);
           this.applyDock(this.baseCenters[this.items.indexOf(item)]);
         }
       });
@@ -781,7 +786,6 @@ class TeamDock {
     } else {
       this.animate();
     }
-    this.restore();
   }
 
   clearTouch() {
@@ -789,20 +793,6 @@ class TeamDock {
       this.touchItem = null;
       this.reset();
     }
-  }
-
-  preview(item) {
-    if (!this.mainImage) return;
-    const photo = item.getAttribute("data-photo");
-    if (!photo || photo === this.mainImage.getAttribute("src")) return;
-    this.mainImage.classList.remove("loaded");
-    this.mainImage.src = photo;
-  }
-
-  restore() {
-    if (!this.mainImage || this.mainImage.getAttribute("src") === this.groupPhoto) return;
-    this.mainImage.classList.remove("loaded");
-    this.mainImage.src = this.groupPhoto;
   }
 }
 

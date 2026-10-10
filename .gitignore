@@ -1,0 +1,14 @@
+# El repositorio contiene unicamente los tres documentos del sitio:
+# index.html, style.css y script.js. Todo lo demas es de trabajo local.
+
+# Documentos de trabajo del entorno de desarrollo. Son utiles en esta
+# maquina, pero no forman parte del sitio y no deben viajar al repositorio.
+AGENTS.md
+MEMORY.md
+
+# Salidas de herramientas
+.mcp-validator/
+
+# Sistema
+.DS_Store
+Thumbs.db
