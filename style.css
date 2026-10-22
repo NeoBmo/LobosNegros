@@ -19,9 +19,12 @@
   --color-red: #DB1A1A;            /* único acento */
   --color-line: rgba(10, 10, 12, 0.1);
 
-  /* Tipografía */
-  --font-display: 'Outfit', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  /* Tipografía (Propuesta 1):
+     Títulos: Impact o fuentes sans-serif condensadas/gruesas del sistema.
+     Cuerpo: Fuentes geométricas y limpias predeterminadas en casi cualquier dispositivo. */
+  --font-title: 'Impact', 'Arial Black', 'Segoe UI Black', sans-serif;
+  --font-display: var(--font-title);
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
   --fs-base: 1rem;
@@ -218,7 +221,7 @@ section[id] {
   font-size: var(--fs-2xl);
   text-transform: uppercase;
   font-weight: var(--fw-black);
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   text-align: center;
   color: var(--color-dark);
   position: relative;
@@ -300,7 +303,7 @@ section[id] {
   font-weight: var(--fw-black);
   color: var(--color-red);
   text-transform: uppercase;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.02em;
   line-height: 1;
 }
 
@@ -446,7 +449,7 @@ body.menu-open {
   font-family: var(--font-display);
   font-size: var(--fs-display);
   font-weight: var(--fw-black);
-  letter-spacing: -0.03em;
+  letter-spacing: 0.02em;
   line-height: 1.05;
   text-transform: uppercase;
   text-wrap: balance;
@@ -461,19 +464,24 @@ body.menu-open {
 .about-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  grid-template-areas:
-    "header header"
-    "text   media";
   gap: var(--space-6) var(--space-7);
   align-items: center;
 }
 
-.about-content .section-title {
-  grid-area: header;
+.about-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.about-text {
-  grid-area: text;
+.about-info .section-title {
+  text-align: left;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-3);
+}
+
+.about-info .section-title::after {
+  left: 0;
+  transform: none;
 }
 
 .about-text p {
@@ -485,7 +493,7 @@ body.menu-open {
 
 .about-image {
   position: relative;
-  grid-area: media;
+  width: 100%;
 }
 
 /* Espacio reservado para la fotografía del club. Se mantiene el aspecto 4/3
@@ -669,7 +677,7 @@ body.menu-open {
   font-family: var(--font-display);
   font-size: var(--fs-xl);
   font-weight: var(--fw-bold);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.01em;
   transition: color var(--t-base);
 }
 
@@ -1172,7 +1180,7 @@ body.menu-open {
   font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
   text-transform: uppercase;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   margin-bottom: var(--space-5);
   padding-bottom: var(--space-4);
   border-bottom: 1px solid var(--color-line);
@@ -1286,6 +1294,42 @@ button:focus-visible,
 }
 
 /* ============ 16. RESPONSIVE ============ */
+@media (max-width: 1024px) {
+  /* En tablets y móviles Sobre Nosotros colapsa a layout vertical:
+     título y párrafo arriba, medios y dock abajo */
+  .about-content {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .about-info .section-title {
+    text-align: center;
+    margin-bottom: var(--space-5);
+    padding-bottom: var(--space-4);
+  }
+
+  .about-info .section-title::after {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .about-text {
+    text-align: center;
+  }
+
+  .about-text p {
+    max-width: 65ch;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .about-image {
+    max-width: 580px;
+    margin: 0 auto;
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   /* Panel pegado a la navbar (sin hueco flotante) y con filo rojo superior:
      la identidad es cuadriculada, un panel detached se leía comopiece suelta. */
@@ -1389,11 +1433,6 @@ button:focus-visible,
   }
 
   .about-content {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "header"
-      "text"
-      "media";
     gap: var(--space-5);
   }
 

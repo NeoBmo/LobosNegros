@@ -17,7 +17,7 @@
        definitiva no se declara ninguna: apuntar a un archivo inexistente
        produce una tarjeta social rota, que es peor que no tener imagen. -->
   <meta property="og:locale" content="es_CO" />
-  <!-- Json-ld data structure. TODO: confirmar horarios, coordenadas y logo real del club -->
+  <!-- Json-ld data structure. TODO: confirmar coordenadas y logo real del club -->
   <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -43,15 +43,15 @@
         "openingHoursSpecification": [
           {
             "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            "opens": "16:00",
-            "closes": "19:00"
+            "dayOfWeek": ["Tuesday", "Thursday"],
+            "opens": "19:00",
+            "closes": "21:00"
           },
           {
             "@type": "OpeningHoursSpecification",
-            "dayOfWeek": ["Saturday"],
-            "opens": "09:00",
-            "closes": "12:00"
+            "dayOfWeek": ["Saturday", "Sunday"],
+            "opens": "08:00",
+            "closes": "10:00"
           }
         ],
         "sameAs": [
@@ -64,10 +64,7 @@
   <!-- Los espacios del data URI van como %20: sin ellos el W3C los rechaza
        (Illegal character after "ta:") y el favicon puede no cargar. -->
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20fill='%230A0A0C'/%3E%3Cpath%20d='M14%2014h10v36H14zM40%2014h10v36H40z'%20fill='%23DB1A1A'/%3E%3C/svg%3E" />
-  <!-- Typography -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;700;800&display=swap" rel="stylesheet">
+
   <!-- Stylesheets -->
   <link rel="stylesheet" href="style.css" />
   <!-- Javascripts -->
@@ -123,20 +120,22 @@
     <section class="about" id="about" aria-label="Sobre el club">
       <div class="container">
         <div class="about-content">
-          <h2 class="section-title" data-aos="fade-up">Sobre nosotros</h2>
-          <div class="about-text" data-aos="fade-right">
-            <p>
-              Hace más de 15 años lo que empezó como una pasión se convirtió en algo que nos
-              enorgullece:
-              una familia. No lo decimos de manera figurada. Acá cada integrante conoce a sus compañeros por nombre,
-              sabe cuándo alguien tuvo un mal día y entiende lo que significa
-              ponerse un cinturón nuevo por primera vez.
-              Somos un club con formación de alto nivel. Trabajamos con niños que dan su primera patada, con adultos que
-              buscan disciplina y movimiento, y con competidores que apuntan al podio
-              y a todos los tratamos con el mismo rigor y la misma cercanía. Porque para nosotros el taekwondo no
-              termina en el entrenamiento: es una forma de pararse en el mundo, de relacionarse con los demás,
-              de superarse sin rendirse. Eso es lo que llevamos 15 años enseñando.
-            </p>
+          <div class="about-info" data-aos="fade-right">
+            <h2 class="section-title">Sobre nosotros</h2>
+            <div class="about-text">
+              <p>
+                Hace más de 15 años lo que empezó como una pasión se convirtió en algo que nos
+                enorgullece:
+                una familia. No lo decimos de manera figurada. Acá cada integrante conoce a sus compañeros por nombre,
+                sabe cuándo alguien tuvo un mal día y entiende lo que significa
+                ponerse un cinturón nuevo por primera vez.
+                Somos un club con formación de alto nivel. Trabajamos con niños que dan su primera patada, con adultos que
+                buscan disciplina y movimiento, y con competidores que apuntan al podio
+                y a todos los tratamos con el mismo rigor y la misma cercanía. Porque para nosotros el taekwondo no
+                termina en el entrenamiento: es una forma de pararse en el mundo, de relacionarse con los demás,
+                de superarse sin rendirse. Eso es lo que llevamos 15 años enseñando.
+              </p>
+            </div>
           </div>
           <div class="about-image" data-aos="fade-left">
             <div class="about-main-media">
@@ -484,11 +483,9 @@
               </div>
               <div class="location-detail">
                 <h4>Horario de Entrenamiento</h4>
-                <!-- TODO: confirmar horario real con el dueño (fuente única con JSON-LD) -->
                 <p>
-                  Lunes a Viernes: 4:00 PM - 7:00 PM<br />
-                  Sábado: 9:00 AM - 12:00 PM<br />
-                  Domingo: Cerrado
+                  Martes y Jueves: 7:00 PM - 9:00 PM<br />
+                  Sábado y Domingo: 8:00 AM - 10:00 AM
                 </p>
               </div>
               <div class="location-actions">
