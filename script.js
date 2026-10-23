@@ -159,6 +159,15 @@ class Navigation {
   }
 
   computeActiveSectionId(scrollY) {
+    // La última sección no siempre puede alcanzar el punto de sondeo (el
+    // footer limita el scroll máximo). En ese caso, al llegar al fondo, se
+    // marca la última sección para que la nav no se quede en la anterior.
+    const atBottom =
+      window.innerHeight + scrollY >= document.documentElement.scrollHeight - 2;
+    if (atBottom && this.sections.length) {
+      return this.sections[this.sections.length - 1].getAttribute("id");
+    }
+
     const probe = scrollY + CONFIG.scrollOffset + 10;
     let currentSectionId = "";
 
@@ -210,12 +219,26 @@ class Navigation {
       // Se difiere dos frames porque el panel arranca en `visibility: hidden`
       // y la transición dura 200ms: enfocar un elemento invisible es un no-op,
       // y por eso el foco se quedaba en <body>.
+      const firstLink = this.navMenu.querySelector("a");
+      const focusFirstLink = () => {
+        if (!this.navMenu.classList.contains("active")) return;
+        if (firstLink) firstLink.focus({ preventScroll: true });
+      };
+
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          const firstLink = this.navMenu.querySelector("a");
-          if (firstLink) firstLink.focus();
-        });
+        requestAnimationFrame(focusFirstLink);
       });
+
+      // En algunos motores la transición de visibilidad aún no ha dejado
+      // enfocar el panel en esos dos frames. Se reintenta una vez, solo si el
+      // foco sigue en el botón o en <body>, para no robarlo si el usuario ya
+      // se movió con Tab.
+      setTimeout(() => {
+        const active = document.activeElement;
+        if (active === this.mobileMenuBtn || active === document.body) {
+          focusFirstLink();
+        }
+      }, 240);
     }
   }
 
@@ -1026,7 +1049,7 @@ class VisualEffects {
         const mouseY = e.clientY - rect.top - rect.height / 2;
         const angleX = -mouseY * 0.15;
         const angleY = mouseX * 0.15;
-        link.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale(1.1)`;
+        link.style.transform = `perspective(1000px) rotateX(${angleX}deg) rotateY(${angleY}deg) scale(1.15)`;
       });
       link.addEventListener("mouseleave", () => { link.style.transform = ""; });
     });
@@ -1105,7 +1128,9 @@ class MapLibreIntegration {
         style: "https://tiles.openfreemap.org/styles/fiord",
         center: [lng, lat],
         zoom: 16,
-        attributionControl: true,
+        // La atribución queda siempre visible: en un mapa a sangre completa
+        // el botón compacto se come el texto legal y añade un control extra.
+        attributionControl: { compact: false },
         pitchWithRotate: false,
         dragRotate: false,
         scrollZoom: { smooth: true },
@@ -1114,6 +1139,36 @@ class MapLibreIntegration {
         keyboard: true,
         maxZoom: 19,
         minZoom: 12,
+        // El mapa vive dentro de una página larga: la rueda y el arrastre de un
+        // dedo no deben secuestrar el scroll. Ctrl/⌘ + rueda y dos dedos siguen
+        // funcionando, y los botones de zoom cubren el resto.
+        cooperativeGestures: true,
+        locale: {
+          "Map.Title": "Mapa de la ubicación del club",
+          "Marker.Title": "Ubicación del club",
+          "NavigationControl.ZoomIn": "Acercar el mapa",
+          "NavigationControl.ZoomOut": "Alejar el mapa",
+          "AttributionControl.ToggleAttribution": "Mostrar u ocultar atribución",
+          "CooperativeGesturesHandler.WindowsHelpText": "Usa Ctrl + rueda para hacer zoom",
+          "CooperativeGesturesHandler.MacHelpText": "Usa ⌘ + rueda para hacer zoom",
+          "CooperativeGesturesHandler.MobileHelpText": "Usa dos dedos para mover el mapa",
+        },
+      });
+
+      this.map.addControl(
+        new maplibregl.NavigationControl({ showCompass: false }),
+        "bottom-right"
+      );
+
+      this.map.on("error", (event) => {
+        logger.warn(`MapLibre: ${event.error?.message || "error desconocido"}`);
+      });
+
+      // La paleta se aplica en `style.load`, antes del primer render visible.
+      // Si se aplicara en `load`, el usuario vería un frame con el azul de
+      // `fiord` mientras MapLibre procesa el repintado.
+      this.map.on("style.load", () => {
+        this.applyBrandPalette();
       });
 
       this.map.on("load", () => {
@@ -1130,30 +1185,32 @@ class MapLibreIntegration {
           type: "circle",
           source: "club-zone",
           paint: {
-            "circle-radius": 45,
+            "circle-radius": 34,
             "circle-color": "#DB1A1A",
-            "circle-opacity": 0.25,
+            "circle-opacity": 0.18,
             "circle-stroke-color": "#DB1A1A",
-            "circle-stroke-width": 2,
-            "circle-stroke-opacity": 0.8,
+            "circle-stroke-width": 1.5,
+            "circle-stroke-opacity": 0.7,
           },
         });
 
         const markerElement = document.createElement("div");
         markerElement.className = "map-club-marker";
         markerElement.innerHTML = `
-          <svg viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17 30L8.5 43.5L25.5 43.5L17 30Z" fill="#DB1A1A"/>
-            <rect x="2" y="2" width="30" height="30" fill="#DB1A1A" stroke="#FFFFFF" stroke-width="2"/>
-            <rect x="11" y="11" width="12" height="12" fill="#FFFFFF"/>
-          </svg>
+          <span class="map-club-marker-pin">
+            <svg viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M17 30L8.5 43.5L25.5 43.5L17 30Z" fill="#DB1A1A"/>
+              <rect x="2" y="2" width="30" height="30" fill="#DB1A1A" stroke="#FFFFFF" stroke-width="2"/>
+              <rect x="11" y="11" width="12" height="12" fill="#FFFFFF"/>
+            </svg>
+          </span>
         `;
 
         const popupHtml = `
           <div class="map-popup-content">
             <span class="map-popup-icon" aria-hidden="true"></span>
             <div>
-              <h4 class="map-popup-title">Club Lobos Negros</h4>
+              <p class="map-popup-title">Club Lobos Negros</p>
               <p class="map-popup-address">Parque La Inmaculada<br>Calle 37c #5a-58, Barranquilla</p>
             </div>
           </div>
@@ -1180,6 +1237,69 @@ class MapLibreIntegration {
     }
   }
 
+  // El estilo `fiord` es azul grisáceo y compite con la paleta del club.
+  // Se repinta por capas para dejar el mapa en negro/grises, con el rojo
+  // reservado al marcador. Las capas se comprueban antes de tocarlas para
+  // que un cambio futuro del estilo no rompa la integración.
+  applyBrandPalette() {
+    const palette = {
+      background: { "background-color": "#0A0A0C" },
+      water: { "fill-color": "#121216" },
+      landuse_residential: { "fill-color": "#0E0E12", "fill-opacity": 1 },
+      landcover_wood: { "fill-color": "#0C0C10" },
+      park: { "fill-color": "#101014", "fill-opacity": 0.85 },
+      park_outline: { "line-color": "#2A2A31" },
+      waterway: { "line-color": "#1C1C22" },
+      building: { "fill-color": "#1A1A1F", "fill-opacity": 0.8 },
+      "highway_path": { "line-color": "#2A2A31" },
+      "highway_minor": { "line-color": "#2C2C33" },
+      "highway_major_casing": { "line-color": "#3A3A42" },
+      "highway_major_inner": { "line-color": "#2E2E35" },
+      "highway_major_subtle": { "line-color": "#26262C" },
+      "highway_motorway_casing": { "line-color": "#44444C" },
+      "highway_motorway_inner": { "line-color": "#3A3A42" },
+      "highway_motorway_subtle": { "line-color": "#26262C" },
+      "railway_transit": { "line-color": "#2A2A31" },
+      "railway_transit_dashline": { "line-color": "#3A3A42" },
+      "railway_service": { "line-color": "#2A2A31" },
+      "railway_service_dashline": { "line-color": "#3A3A42" },
+      railway: { "line-color": "#2A2A31" },
+      railway_dashline: { "line-color": "#3A3A42" },
+      boundary_state: { "line-color": "#34343B" },
+      "boundary_country_z0-4": { "line-color": "#34343B" },
+      "boundary_country_z5-": { "line-color": "#34343B" },
+      water_name: { "text-color": "#8A8A92", "text-halo-color": "#0A0A0C" },
+      highway_name_other: { "text-color": "#9A9AA2", "text-halo-color": "#0A0A0C" },
+      highway_ref: { "text-color": "#9A9AA2", "text-halo-color": "#0A0A0C" },
+      place_other: { "text-color": "#9A9AA2", "text-halo-color": "#0A0A0C" },
+      place_suburb: { "text-color": "#9A9AA2", "text-halo-color": "#0A0A0C" },
+      place_village: { "text-color": "#9A9AA2", "text-halo-color": "#0A0A0C" },
+      place_town: { "text-color": "#A5A5AD", "text-halo-color": "#0A0A0C" },
+      place_city: { "text-color": "#A5A5AD", "text-halo-color": "#0A0A0C" },
+      place_city_large: { "text-color": "#B8B8BE", "text-halo-color": "#0A0A0C" },
+      place_state: { "text-color": "#A0A0A8", "text-halo-color": "#0A0A0C" },
+      place_country_other: { "text-color": "#B8B8BE", "text-halo-color": "#0A0A0C" },
+      place_country_minor: { "text-color": "#B8B8BE", "text-halo-color": "#0A0A0C" },
+      place_country_major: { "text-color": "#C8C8CE", "text-halo-color": "#0A0A0C" },
+      place_continent: { "text-color": "#E6E6EA", "text-halo-color": "#0A0A0C" },
+      "aeroway-area": { "fill-color": "#1A1A1F" },
+      "aeroway-runway": { "line-color": "#2A2A31" },
+      "aeroway-runway-casing": { "line-color": "#3A3A42" },
+      "aeroway-taxiway": { "line-color": "#2A2A31" },
+      road_area_pier: { "fill-color": "#121216" },
+      road_pier: { "line-color": "#2A2A31" },
+      tunnel_motorway_casing: { "line-color": "#2A2A31" },
+      tunnel_motorway_inner: { "line-color": "#26262C" },
+    };
+
+    Object.entries(palette).forEach(([layerId, properties]) => {
+      if (!this.map.getLayer(layerId)) return;
+      Object.entries(properties).forEach(([property, value]) => {
+        this.map.setPaintProperty(layerId, property, value);
+      });
+    });
+  }
+
   hideMapLoading() {
     const loading = this.mapContainer.querySelector(".map-loading");
     if (loading) loading.style.display = "none";
@@ -1187,14 +1307,10 @@ class MapLibreIntegration {
 
   showFallback() {
     const loading = this.mapContainer.querySelector(".map-loading");
-    if (loading) {
-      loading.innerHTML = `
-        <div style="padding: 20px; text-align: center;">
-          <p style="color: #DB1A1A; font-weight: bold; margin-bottom: 8px;">Ubicación no disponible de forma interactiva.</p>
-          <p style="font-size: 12px; color: #666;">Dirección: Parque La Inmaculada, Las Palmas, Barranquilla</p>
-        </div>
-      `;
-    }
+    if (loading) loading.style.display = "none";
+
+    const fallback = this.mapContainer.querySelector(".map-fallback");
+    if (fallback) fallback.classList.add("is-visible");
   }
 }
 
