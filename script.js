@@ -338,6 +338,9 @@ class HeroParticles {
     this.height = 0;
     this.dpr = Math.min(window.devicePixelRatio || 1, 2);
     this.mouse = { x: null, y: null, radius: 130, isHovering: false };
+    this.maxParticles = 64;
+    this.lastFrame = 0;
+    this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.init();
   }
 
@@ -359,7 +362,11 @@ class HeroParticles {
 
   createParticles() {
     this.particles = [];
-    const count = this.width < 600 ? Math.floor(Math.max(this.width / 20, 22)) : (this.width < 1024 ? 45 : Math.floor(Math.min(this.width / 16, 90)));
+    // Menos base que antes (hasta 90): el canvas se paga en cada frame y las
+    // ráfagas añaden el movimiento extra cuando el usuario interactúa.
+    const narrow = this.width < 600;
+    const count = narrow ? 18 : this.width < 1024 ? 28 : 42;
+    this.maxParticles = narrow ? 36 : this.width < 1024 ? 48 : 64;
     const minSize = 1.5;
     const maxSize = 5.0;
 
@@ -383,7 +390,52 @@ class HeroParticles {
         sinOffset: Math.random() * Math.PI * 2,
         sinSpeed: 0.01 + (1 - depth) * 0.015,
         sinAmp: 0.2 + depth * 0.35,
+        life: 0,
+        age: 0,
+        burst: false,
       });
+    }
+  }
+
+  burst(x, y, count) {
+    if (this.reducedMotionQuery.matches) return;
+
+    for (let i = 0; i < count; i += 1) {
+      // Si se llena el cupo, se retira una partícula ambiental antigua en vez
+      // de dejar crecer el array sin límite.
+      if (this.particles.length >= this.maxParticles) {
+        const ambientIndex = this.particles.findIndex((p) => !p.burst);
+        if (ambientIndex === -1) break;
+        this.particles.splice(ambientIndex, 1);
+      }
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.9 + Math.random() * 2.6;
+      const size = 1.5 + Math.random() * 3;
+      const alpha = 0.7 + Math.random() * 0.3;
+      this.particles.push({
+        x,
+        y,
+        size,
+        depth: 1,
+        baseVy: 0,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        alpha,
+        color: `rgba(255, 58, 58, ${alpha})`,
+        staticColor: `rgba(255, 58, 58, ${alpha * 0.7})`,
+        sinOffset: Math.random() * Math.PI * 2,
+        sinSpeed: 0.02,
+        sinAmp: 0.15,
+        life: 700 + Math.random() * 700,
+        age: 0,
+        burst: true,
+      });
+    }
+
+    if (!this.isRunning && this.hero) {
+      const rect = this.hero.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) this.start();
     }
   }
 
@@ -415,6 +467,16 @@ class HeroParticles {
       }
     }, { passive: true });
     this.hero.addEventListener("touchend", () => { this.mouse.isHovering = false; this.mouse.x = null; this.mouse.y = null; }, { passive: true });
+
+    // Ratón y tacto comparten `pointerdown`; una pulsación secundaria no
+    // dispara la ráfaga.
+    this.hero.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      const rect = this.hero.getBoundingClientRect();
+      const amount = event.pointerType === "touch" ? 8 : 11;
+      this.burst(event.clientX - rect.left, event.clientY - rect.top, amount);
+    }, { passive: true });
+
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         this.stop();
@@ -453,6 +515,7 @@ class HeroParticles {
   start() {
     if (this.isRunning) return;
     this.isRunning = true;
+    this.lastFrame = 0;
     this.render();
   }
 
@@ -464,15 +527,32 @@ class HeroParticles {
     }
   }
 
-  render() {
+  render(timestamp) {
     if (!this.isRunning) return;
+    const now = timestamp || performance.now();
+    const delta = this.lastFrame ? Math.min(now - this.lastFrame, 50) : 16.67;
+    this.lastFrame = now;
+    const step = delta / 16.67;
+    const friction = Math.pow(0.94, step);
+
     this.ctx.clearRect(0, 0, this.width, this.height);
 
-    for (let i = 0; i < this.particles.length; i++) {
+    for (let i = this.particles.length - 1; i >= 0; i -= 1) {
       const p = this.particles[i];
-      p.sinOffset += p.sinSpeed;
-      p.x += p.vx + Math.sin(p.sinOffset) * p.sinAmp;
-      p.y += p.baseVy + p.vy;
+
+      // Las partículas de ráfaga viven un tiempo acotado y se retiran del
+      // array; las ambientales se reciclan al salir por arriba.
+      if (p.burst) {
+        p.age += delta;
+        if (p.age >= p.life) {
+          this.particles.splice(i, 1);
+          continue;
+        }
+      }
+
+      p.sinOffset += p.sinSpeed * step;
+      p.x += (p.vx + Math.sin(p.sinOffset) * p.sinAmp) * step;
+      p.y += (p.baseVy + p.vy) * step;
 
       if (this.mouse.isHovering && this.mouse.x !== null) {
         const dx = p.x - this.mouse.x;
@@ -481,27 +561,31 @@ class HeroParticles {
         if (dist < this.mouse.radius && dist > 0) {
           const force = (this.mouse.radius - dist) / this.mouse.radius;
           const angle = Math.atan2(dy, dx);
-          p.vx += Math.cos(angle) * force * 0.7;
-          p.vy += Math.sin(angle) * force * 0.7;
+          p.vx += Math.cos(angle) * force * 0.7 * step;
+          p.vy += Math.sin(angle) * force * 0.7 * step;
         }
       }
 
-      p.vx *= 0.94;
-      p.vy *= 0.94;
+      p.vx *= friction;
+      p.vy *= friction;
 
-      if (p.y < -15) {
-        p.y = this.height + 15;
-        p.x = Math.random() * this.width;
-        p.vx = 0;
-        p.vy = 0;
+      if (!p.burst) {
+        if (p.y < -15) {
+          p.y = this.height + 15;
+          p.x = Math.random() * this.width;
+          p.vx = 0;
+          p.vy = 0;
+        }
+        if (p.x < -20) p.x = this.width + 20;
+        if (p.x > this.width + 20) p.x = -20;
       }
-      if (p.x < -20) p.x = this.width + 20;
-      if (p.x > this.width + 20) p.x = -20;
 
+      if (p.burst) this.ctx.globalAlpha = Math.max(0, 1 - p.age / p.life);
       this.ctx.fillStyle = p.color;
       this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      if (p.burst) this.ctx.globalAlpha = 1;
     }
-    this.animationFrameId = requestAnimationFrame(() => this.render());
+    this.animationFrameId = requestAnimationFrame((frameTime) => this.render(frameTime));
   }
 }
 
@@ -891,6 +975,73 @@ class TeamDock {
   }
 }
 
+// Services: inclinación 3D muy contenida siguiendo el puntero.
+// Sólo se activa con puntero fino y sin movimiento reducido; en táctil manda
+// el estado :active del CSS.
+class ServiceTilt {
+  constructor() {
+    this.cards = Array.from(document.querySelectorAll(".service-card"));
+    this.finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
+    this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.activeCard = null;
+    this.frame = 0;
+    this.pointer = { x: 0, y: 0 };
+
+    if (!this.cards.length || !this.finePointer.matches || this.reducedMotionQuery.matches) return;
+    this.bind();
+  }
+
+  bind() {
+    this.cards.forEach((card) => {
+      card.addEventListener("pointerenter", () => this.activate(card));
+      card.addEventListener("pointermove", (event) => {
+        if (this.activeCard !== card) return;
+        this.pointer.x = event.clientX;
+        this.pointer.y = event.clientY;
+        if (this.frame) return;
+        this.frame = requestAnimationFrame(() => {
+          this.frame = 0;
+          this.tilt(card);
+        });
+      });
+      card.addEventListener("pointerleave", () => this.reset(card));
+      card.addEventListener("pointercancel", () => this.reset(card));
+    });
+
+    window.addEventListener("blur", () => {
+      if (this.activeCard) this.reset(this.activeCard);
+    });
+  }
+
+  activate(card) {
+    if (this.activeCard && this.activeCard !== card) this.reset(this.activeCard);
+    this.activeCard = card;
+    card.classList.add("is-tilting");
+  }
+
+  tilt(card) {
+    if (this.activeCard !== card) return;
+    const rect = card.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    const x = (this.pointer.x - rect.left) / rect.width - 0.5;
+    const y = (this.pointer.y - rect.top) / rect.height - 0.5;
+    card.style.transform =
+      `perspective(900px) rotateX(${(-y * 3.2).toFixed(2)}deg) ` +
+      `rotateY(${(x * 4).toFixed(2)}deg) translateY(-6px) scale(1.01)`;
+  }
+
+  reset(card) {
+    card.style.transform = "";
+    card.classList.remove("is-tilting");
+    if (this.activeCard === card) this.activeCard = null;
+    if (this.frame) {
+      cancelAnimationFrame(this.frame);
+      this.frame = 0;
+    }
+  }
+}
+
 // Benefits
 class Accordion {
   constructor() {
@@ -968,6 +1119,10 @@ class TestimonialsMarquee {
     this.dragging = false;
     this.dragStartX = 0;
     this.dragStartOffset = 0;
+    this.slides = [];
+    this.slideMetrics = [];
+    this.lastScales = [];
+    this.viewportWidth = window.innerWidth;
     this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     this.init();
   }
@@ -1000,9 +1155,19 @@ class TestimonialsMarquee {
 
   measure() {
     if (!this.track || !this.track.children.length) return;
-    const half = this.track.children.length / 2;
+    this.slides = Array.from(this.track.children);
+    this.slideMetrics = this.slides.map((slide) => ({
+      center: slide.offsetLeft + slide.offsetWidth / 2,
+      width: slide.offsetWidth,
+    }));
+
+    const half = this.slides.length / 2;
     if (half < 1) return;
-    this.period = this.track.children[half].offsetLeft;
+    this.period = this.slideMetrics[half]
+      ? this.slideMetrics[half].center - this.slideMetrics[half].width / 2
+      : 0;
+    this.viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    this.lastScales = new Array(this.slides.length).fill(0);
   }
 
   setupVisibilityObserver() {
@@ -1052,6 +1217,37 @@ class TestimonialsMarquee {
   render() {
     if (!this.track) return;
     this.track.style.transform = `translateX(${-this.offset}px)`;
+    this.updateScales();
+  }
+
+  // Las tarjetas crecen al acercarse al centro y se reducen al salir. La
+  // posición se calcula con métricas cacheadas: no hay getBoundingClientRect
+  // por slide en cada frame.
+  updateScales() {
+    if (!this.slides.length) return;
+
+    if (this.reducedMotionQuery.matches) {
+      this.slides.forEach((slide) => {
+        if (slide.style.transform) slide.style.transform = "";
+      });
+      this.lastScales = new Array(this.slides.length).fill(1);
+      return;
+    }
+
+    const center = this.viewportWidth / 2;
+    const falloff = Math.max(this.viewportWidth * 0.55, 1);
+
+    for (let i = 0; i < this.slides.length; i += 1) {
+      const metric = this.slideMetrics[i];
+      if (!metric) continue;
+      const slideCenter = metric.center - this.offset;
+      const distance = Math.abs(center - slideCenter);
+      const t = Math.min(1, distance / falloff);
+      const scale = 1 - t * t * 0.055;
+      if (Math.abs(scale - (this.lastScales[i] || 0)) < 0.001) continue;
+      this.slides[i].style.transform = `scale(${scale.toFixed(3)})`;
+      this.lastScales[i] = scale;
+    }
   }
 
   run() {
@@ -1445,6 +1641,7 @@ class App {
       new HeroParticles();
       new AnimationObserver();
       new TeamDock();
+      new ServiceTilt();
       new Accordion();
       new TestimonialsMarquee();
       new VisualEffects();

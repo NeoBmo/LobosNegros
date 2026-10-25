@@ -454,8 +454,9 @@ body.menu-open {
 /* ============ 7. HERO ============ */
 .hero {
   --pad-y: 0;
-  --pad-x: 0;
+  --pad-x: clamp(1.5rem, 6vw, 4rem);
   position: relative;
+  z-index: 2;
   background: var(--color-dark);
   color: var(--color-white);
   padding: max(1rem, env(safe-area-inset-top)) 0 max(1.5rem, env(safe-area-inset-bottom));
@@ -465,6 +466,37 @@ body.menu-open {
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Sombra exterior inferior: separa la firma del contenido blanco sin
+     añadir un borde. Los degradados internos hacen el resto. */
+  box-shadow: 0 42px 70px -44px rgba(0, 0, 0, 0.7);
+}
+
+/* Profundidad en los bordes: dos degradados largos, uno superior y otro
+   inferior, por debajo de las partículas y del contenido. */
+.hero::before,
+.hero::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero::before {
+  top: 0;
+  height: min(26vh, 240px);
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.58) 32%,
+      rgba(10, 10, 12, 0.2) 68%, transparent 100%);
+}
+
+.hero::after {
+  bottom: 0;
+  height: min(32vh, 320px);
+  background:
+    linear-gradient(0deg, var(--color-dark) 0%, rgba(10, 10, 12, 0.86) 24%,
+      rgba(10, 10, 12, 0.42) 62%, transparent 100%);
 }
 
 .hero-canvas {
@@ -480,23 +512,79 @@ body.menu-open {
 .hero-content {
   position: relative;
   z-index: 3;
-  text-align: left;
+  text-align: center;
   width: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .hero-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
   font-family: var(--font-display);
   font-size: var(--fs-display);
   font-weight: var(--fw-black);
   font-style: italic;
-  letter-spacing: 0.02em;
-  line-height: 1.05;
+  letter-spacing: 0.01em;
+  line-height: 1;
   text-transform: uppercase;
   text-wrap: balance;
-  animation: fadeInUp 800ms ease-out;
+}
+
+.hero-mark {
+  flex: none;
+  display: block;
+  width: clamp(2.5rem, 4.8vw, 3.75rem);
+  aspect-ratio: 1;
+  animation: heroMarkIn 900ms var(--ease-out) both;
+}
+
+.hero-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-word {
+  display: inline-block;
+  animation: heroWordIn 900ms var(--ease-out) both;
+}
+
+.hero-word:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.hero-word:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.hero-word:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+@keyframes heroWordIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.32em, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes heroMarkIn {
+  from {
+    opacity: 0;
+    transform: scale(0.82) rotate(-4deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 /* ============ 8. ABOUT + DOCK DE INTEGRANTES ============ */
@@ -507,13 +595,14 @@ body.menu-open {
 .about-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-  gap: var(--space-6) var(--space-7);
+  gap: clamp(2.5rem, 6vw, 5rem);
   align-items: center;
 }
 
 .about-info {
   display: flex;
   flex-direction: column;
+  max-width: 34rem;
 }
 
 .about-info .section-title {
@@ -524,14 +613,16 @@ body.menu-open {
 
 .about-info .section-title::after {
   left: 0;
-  transform: none;
+  transform: scaleX(var(--title-line-scale));
+  transform-origin: left;
 }
 
 .about-text p {
   color: rgba(0, 0, 0, 0.72);
-  font-size: var(--fs-base);
+  font-size: var(--fs-body);
   line-height: 1.75;
-  max-width: 65ch;
+  max-width: var(--measure);
+  text-wrap: pretty;
 }
 
 .about-image {
@@ -664,17 +755,27 @@ body.menu-open {
 
 .services-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-5);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
 }
 
-/* Bento simétrico: 2 grandes + 2 medianos (espejo diseño marcial) */
+/* Bento asimétrico: 4+2 y 2+4. No es una rejilla de tres columnas iguales,
+   pero conserva la simetría especular de la identidad marcial. */
 .service-card:nth-child(1) {
-  grid-column: 1 / span 2;
+  grid-column: 1 / span 4;
+}
+
+.service-card:nth-child(2) {
+  grid-column: span 2;
+}
+
+.service-card:nth-child(3) {
+  grid-column: span 2;
 }
 
 .service-card:nth-child(4) {
-  grid-column: 2 / span 2;
+  grid-column: 3 / span 4;
 }
 
 .service-card {
@@ -682,15 +783,24 @@ body.menu-open {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-3);
+  min-height: 230px;
   background: var(--color-white);
-  padding: var(--space-6);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+  box-shadow: var(--shadow-card-soft);
   transition: transform var(--t-base), box-shadow var(--t-base),
-    filter var(--t-base), opacity var(--t-base);
+    opacity var(--t-base);
 }
 
 .service-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-card);
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Mientras el puntero inclina la tarjeta no debe competir la transición de
+   transform: el tilt sigue al cursor sin retardo. */
+.service-card.is-tilting {
+  transition: box-shadow var(--t-base), opacity var(--t-base);
+  will-change: transform;
 }
 
 .service-icon {
@@ -707,7 +817,7 @@ body.menu-open {
 }
 
 .service-card:hover .service-icon {
-  transform: translateY(-5px) scale(1.12);
+  transform: translateY(-5px) scale(1.1);
 }
 
 .service-card:nth-child(1) .service-icon svg,
@@ -718,8 +828,9 @@ body.menu-open {
 
 .service-card h3 {
   font-family: var(--font-display);
-  font-size: var(--fs-xl);
+  font-size: var(--fs-lg);
   font-weight: var(--fw-bold);
+  line-height: 1.2;
   letter-spacing: 0.01em;
   transition: color var(--t-base);
 }
@@ -729,24 +840,25 @@ body.menu-open {
 }
 
 .service-card p {
-  color: rgba(0, 0, 0, 0.62);
-  font-size: var(--fs-sm);
+  color: rgba(0, 0, 0, 0.66);
+  font-size: var(--fs-body);
   line-height: 1.7;
-  max-width: 52ch;
+  max-width: 46ch;
 }
 
-/* Efecto focus: la tarjeta activa resalta, el resto se desenfoca */
-@media (min-width: 769px) {
+/* Efecto focus: la tarjeta activa resalta y el resto retrocede. Sin blur:
+   `filter` obliga a repintar la capa en cada frame del hover. */
+@media (min-width: 769px) and (hover: hover) {
   .services-grid:has(.service-card:hover) .service-card:not(:hover) {
-    transform: scale(0.96);
-    filter: blur(2px) saturate(0.85);
-    opacity: 0.6;
+    transform: scale(0.975);
+    opacity: 0.58;
   }
 }
 
 /* ============ 10. BENEFICIOS (ACORDEÓN) ============ */
 .benefits {
-  background: var(--color-dark-surface);
+  /* Negro absoluto pedido por el propietario para esta sección. */
+  background: var(--color-black);
   color: var(--color-white);
   position: relative;
   overflow: hidden;
@@ -774,31 +886,42 @@ body.menu-open {
 .accordion {
   position: relative;
   z-index: 1;
+  display: grid;
+  gap: var(--space-3);
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 .accordion-item {
-  margin-bottom: var(--space-2);
+  margin-bottom: 0;
 }
 
 .accordion-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--space-4);
   width: 100%;
-  padding: var(--space-4) var(--space-4) var(--space-4) calc(var(--space-4) + 8px);
-  background: none;
+  padding: var(--space-4) var(--space-5);
+  background: rgba(255, 255, 255, 0.025);
   border: none;
   color: var(--color-white);
-  font-size: var(--fs-lg);
+  font-size: clamp(1.0625rem, 1.2vw + 0.8rem, 1.3rem);
   font-weight: var(--fw-bold);
+  line-height: 1.3;
   cursor: pointer;
   text-align: left;
-  box-shadow: inset 4px 0 0 var(--color-red);
-  transition: background var(--t-base);
+  box-shadow: inset 4px 0 0 transparent;
+  transition: background var(--t-base), box-shadow var(--t-base);
 }
 
 .accordion-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.accordion-item.active .accordion-header {
   background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 4px 0 0 var(--color-red);
 }
 
 .accordion-icon {
@@ -820,19 +943,19 @@ body.menu-open {
 .accordion-body {
   max-height: 0;
   overflow: hidden;
-  transition: max-height 400ms ease, padding 400ms ease;
-  padding: 0 var(--space-4);
+  transition: max-height 420ms var(--ease-out), padding 420ms var(--ease-out);
+  padding: 0 var(--space-5);
 }
 
 .accordion-item.active .accordion-body {
-  padding: 0 var(--space-4) var(--space-4);
+  padding: 0 var(--space-5) var(--space-5);
 }
 
 .accordion-body p {
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
-  max-width: 65ch;
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.88);
+  max-width: var(--measure);
 }
 
 /* ============ 11. TESTIMONIOS (MARQUEE) ============ */
@@ -846,8 +969,10 @@ body.menu-open {
 
 .testimonials-track {
   display: flex;
-  gap: var(--space-6);
+  align-items: stretch;
+  gap: clamp(1rem, 2vw, 1.5rem);
   width: 100%;
+  padding-block: var(--space-3) var(--space-4);
   touch-action: pan-y;
 }
 
@@ -856,36 +981,47 @@ body.menu-open {
   will-change: transform;
 }
 
+.testimonials-track.is-running .testimonial-slide {
+  will-change: transform;
+}
+
 .testimonial-slide {
   flex: none;
-  width: clamp(300px, 30vw, 420px);
+  width: clamp(300px, 29vw, 400px);
+  transform-origin: center center;
+  /* El transform lo escribe el marquee cada frame; sólo se transiciona la
+     opacidad de entrada para no encadenar transiciones de 500ms. */
+  transition: opacity var(--t-slow);
 }
 
 .testimonial-card {
   background: var(--color-white);
-  padding: var(--space-6);
+  padding: clamp(1.5rem, 3vw, 2rem);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   height: 100%;
-  min-height: 280px;
+  min-height: clamp(300px, 34vw, 360px);
   position: relative;
   overflow: hidden;
-  box-shadow: none;
+  box-shadow: var(--shadow-card-soft);
   transition: transform var(--t-base), box-shadow var(--t-base),
-    filter var(--t-base), opacity var(--t-base);
+    opacity var(--t-base);
 }
 
 .testimonial-card:hover {
-  transform: scale(1.03);
-  box-shadow: var(--shadow-hover);
+  transform: translateY(-6px);
+  box-shadow:
+    0 26px 42px -22px rgba(10, 10, 12, 0.38),
+    0 8px 16px -12px rgba(10, 10, 12, 0.18);
   z-index: 2;
 }
 
-.testimonials-track:has(.testimonial-card:hover) .testimonial-card:not(:hover) {
-  transform: scale(0.96);
-  filter: blur(2px) saturate(0.85);
-  opacity: 0.6;
+@media (hover: hover) and (min-width: 769px) {
+  .testimonials-track:has(.testimonial-card:hover) .testimonial-card:not(:hover) {
+    transform: scale(0.985);
+    opacity: 0.62;
+  }
 }
 
 .testimonial-quote-icon {
@@ -899,12 +1035,13 @@ body.menu-open {
 }
 
 .testimonial-quote {
-  font-size: var(--fs-sm);
-  line-height: 1.75;
+  font-size: var(--fs-body);
+  line-height: 1.7;
   color: rgba(0, 0, 0, 0.72);
   font-style: italic;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
   flex-grow: 1;
+  text-wrap: pretty;
 }
 
 .testimonial-author {
@@ -943,10 +1080,10 @@ body.menu-open {
 }
 
 .author-name {
-  font-size: var(--fs-base);
+  font-size: var(--fs-body);
   font-weight: var(--fw-bold);
   color: var(--color-dark);
-  line-height: 1.2;
+  line-height: 1.25;
   text-wrap: balance;
 }
 
@@ -1035,7 +1172,7 @@ body.menu-open {
 }
 
 .contact-subtitle {
-  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  font-size: var(--fs-body);
   line-height: 1.65;
   color: var(--color-white);
   max-width: 48ch;
@@ -1465,10 +1602,19 @@ button:focus-visible,
 /* ============ 16. RESPONSIVE ============ */
 @media (max-width: 1024px) {
   /* En tablets y móviles Sobre Nosotros colapsa a layout vertical:
-     título y párrafo arriba, medios y dock abajo */
+     título y párrafo arriba, medios y dock abajo. Todo el bloque queda
+     centrado; el párrafo conserva medida de lectura. */
   .about-content {
     grid-template-columns: 1fr;
-    gap: var(--space-6);
+    gap: var(--space-7);
+    justify-items: center;
+  }
+
+  .about-info {
+    width: 100%;
+    max-width: 42rem;
+    margin-inline: auto;
+    align-items: center;
   }
 
   .about-info .section-title {
@@ -1479,23 +1625,51 @@ button:focus-visible,
 
   .about-info .section-title::after {
     left: 50%;
-    transform: translateX(-50%);
+    transform: translateX(-50%) scaleX(var(--title-line-scale));
+    transform-origin: center;
   }
 
   .about-text {
     text-align: center;
+    width: 100%;
   }
 
   .about-text p {
-    max-width: 65ch;
-    margin: 0 auto;
+    max-width: 62ch;
+    margin-inline: auto;
     text-align: left;
   }
 
   .about-image {
-    max-width: 580px;
-    margin: 0 auto;
+    max-width: 620px;
+    margin-inline: auto;
     width: 100%;
+  }
+
+  .about-team,
+  .team-label {
+    text-align: center;
+  }
+
+  .team-group {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* Tablet: el bento pasa a dos columnas, con las tarjetas extremas a ancho
+     completo para no perder el ritmo 4+2. */
+  .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-card:nth-child(1),
+  .service-card:nth-child(4) {
+    grid-column: 1 / -1;
+  }
+
+  .service-card:nth-child(2),
+  .service-card:nth-child(3) {
+    grid-column: span 1;
   }
 }
 
@@ -1642,25 +1816,50 @@ button:focus-visible,
   }
 
   .hero {
-    padding: var(--space-8) var(--space-2);
+    padding: var(--space-8) 0;
+  }
+
+  /* Firma móvil: logotipo arriba y las tres palabras apiladas a la izquierda.
+     Al liberar el ancho de la línea única, el cuerpo puede crecer. */
+  .hero-content {
+    text-align: left;
   }
 
   .hero-title {
-    font-size: var(--fs-2xl);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.04em;
+    font-size: clamp(3.2rem, 17vw, 5.5rem);
+    line-height: 0.95;
+    text-align: left;
+  }
+
+  .hero-mark {
+    width: 3rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .hero-word {
+    display: block;
   }
 
   .about-content {
-    gap: var(--space-5);
+    gap: var(--space-6);
+  }
+
+  .about-text p {
+    max-width: 52ch;
+    text-align: left;
   }
 
   .services-grid {
     grid-template-columns: 1fr;
   }
 
-  /* En móvil el bento colapsa a tarjetas iguales */
-  .service-card:nth-child(1),
-  .service-card:nth-child(4) {
+  /* En móvil el bento colapsa a una lista vertical de tarjetas iguales */
+  .service-card {
     grid-column: auto;
+    min-height: 0;
   }
 
   .testimonial-slide {
@@ -1695,11 +1894,6 @@ button:focus-visible,
 }
 
 @media (max-width: 480px) {
-  .hero-title {
-    font-size: 1.75rem;
-    line-height: 1.25;
-  }
-
   /* Celulares: sección muy compacta, iconos táctiles mínimos (44px × 44px WCAG) */
   .contact-social {
     --pad-y: clamp(2.5rem, 5vh, 3.25rem);
