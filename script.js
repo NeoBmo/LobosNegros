@@ -5,7 +5,33 @@ const CONFIG = Object.freeze({
   observerThreshold: 0.15,
   observerRootMargin: "0px 0px -100px 0px",
   debugMode: false,
-  mapLocation: { lat: 10.940750, lng: -74.791333 },
+  // Los dos puntos de entrenamiento. La tarjeta, los marcadores y el fallback
+  // se alimentan de esta lista; no dupliques coordenadas en el marcado.
+  mapLocations: [
+    {
+      id: "inmaculada",
+      shortName: "La Inmaculada",
+      name: "Parque La Inmaculada",
+      addressHtml:
+        "Calle 37c #5a-58 · Barrio Las Palmas<br>Sur Oriente, Barranquilla, Atlántico",
+      popupAddress: "Parque La Inmaculada<br>Calle 37c #5a-58, Barranquilla",
+      lat: 10.940750,
+      lng: -74.791333,
+      directions:
+        "https://www.google.com/maps/dir/?api=1&destination=10.940750,-74.791333",
+    },
+    {
+      id: "soledad",
+      shortName: "Soledad",
+      name: "Cancha de Baloncesto Designado",
+      addressHtml: "Cra. 30 #27C-35<br>Soledad, Atlántico",
+      popupAddress: "Cancha de Baloncesto Designado<br>Cra. 30 #27C-35, Soledad",
+      lat: 10.9282632,
+      lng: -74.7741079,
+      directions:
+        "https://www.google.com/maps/dir/?api=1&destination=10.9282632,-74.7741079",
+    },
+  ],
 });
 
 /* Logger */
@@ -1331,16 +1357,152 @@ class MapLibreIntegration {
     this.mapContainer = document.getElementById("map-container");
     this.mapElement = document.getElementById("map");
     this.isLoaded = false;
+    this.locations = CONFIG.mapLocations;
+    this.activeId = this.locations[0]?.id || null;
+    this.markers = new Map();
+    this.popup = null;
+    this.tabs = Array.from(document.querySelectorAll("[data-location]"));
+    this.locationName = document.querySelector("[data-location-name]");
+    this.locationAddress = document.querySelector("[data-location-address]");
+    this.locationDirections = document.querySelector("[data-location-directions]");
+    this.locationStatus = document.querySelector("[data-location-status]");
 
     this.init();
   }
 
   init() {
     if (!this.mapContainer || !this.mapElement) return;
+    this.bindLocationSelector();
     this.setupLazyLoad();
   }
 
+  bindLocationSelector() {
+    this.tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        this.selectLocation(tab.dataset.location, { fly: true, announce: true });
+      });
+    });
+  }
+
+  // Fuente única de la tarjeta, los tabs y los marcadores. Se puede llamar
+  // antes de que MapLibre exista: la tarjeta se actualiza igual.
+  selectLocation(id, { fly = false, announce = false, showPopup = true } = {}) {
+    const location = this.locations.find((item) => item.id === id);
+    if (!location) return;
+
+    this.activeId = id;
+
+    this.tabs.forEach((tab) => {
+      const active = tab.dataset.location === id;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-pressed", String(active));
+    });
+
+    if (this.locationName) this.locationName.textContent = location.name;
+    if (this.locationAddress) this.locationAddress.innerHTML = location.addressHtml;
+    if (this.locationDirections) this.locationDirections.href = location.directions;
+    if (announce && this.locationStatus) {
+      this.locationStatus.textContent = `Punto seleccionado: ${location.name}`;
+    }
+
+    this.markers.forEach((marker, markerId) => {
+      const element = marker.getElement();
+      const active = markerId === id;
+      element.classList.toggle("is-active", active);
+      element.setAttribute("aria-pressed", String(active));
+    });
+
+    if (!this.map || !this.isLoaded) return;
+
+    const coordinates = [location.lng, location.lat];
+    if (showPopup && this.popup) {
+      this.popup
+        .setLngLat(coordinates)
+        .setHTML(this.popupHtml(location))
+        .addTo(this.map);
+    }
+
+    if (fly) {
+      this.map.flyTo({
+        center: coordinates,
+        zoom: 16,
+        duration: 900,
+        essential: true,
+      });
+    }
+  }
+
+  popupHtml(location) {
+    return `
+      <div class="map-popup-content">
+        <span class="map-popup-icon" aria-hidden="true"></span>
+        <div>
+          <p class="map-popup-title">Club Lobos Negros</p>
+          <p class="map-popup-address">${location.popupAddress}</p>
+        </div>
+      </div>
+    `;
+  }
+
+  createMarker(location) {
+    const element = document.createElement("button");
+    element.type = "button";
+    element.className = "map-club-marker";
+    element.dataset.locationId = location.id;
+    element.setAttribute(
+      "aria-label",
+      `Seleccionar ${location.name} en el mapa`
+    );
+    element.setAttribute("aria-pressed", String(location.id === this.activeId));
+    if (location.id === this.activeId) element.classList.add("is-active");
+    element.innerHTML = `
+      <span class="map-club-marker-pin">
+        <svg viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M17 30L8.5 43.5L25.5 43.5L17 30Z" fill="#DB1A1A"/>
+          <rect x="2" y="2" width="30" height="30" fill="#DB1A1A" stroke="#FFFFFF" stroke-width="2"/>
+          <rect x="11" y="11" width="12" height="12" fill="#FFFFFF"/>
+        </svg>
+      </span>
+    `;
+
+    element.addEventListener("click", (event) => {
+      event.stopPropagation();
+      this.selectLocation(location.id, { fly: true, announce: true });
+    });
+
+    const marker = new maplibregl.Marker({ element, anchor: "bottom" })
+      .setLngLat([location.lng, location.lat])
+      .addTo(this.map);
+
+    this.markers.set(location.id, marker);
+  }
+
+  fitLocations() {
+    if (!this.map || this.locations.length < 1) return;
+    const bounds = new maplibregl.LngLatBounds();
+    this.locations.forEach((location) => {
+      bounds.extend([location.lng, location.lat]);
+    });
+
+    const compact = window.matchMedia("(max-width: 860px)").matches;
+    this.map.fitBounds(bounds, {
+      // En escritorio la tarjeta ocupa la izquierda: el encuadre reserva ese
+      // espacio. En móvil la tarjeta va debajo, pero los controles de zoom y
+      // la atribución siguen abajo a la derecha: el margen evita tapar el pin.
+      padding: compact
+        ? { top: 72, bottom: 120, left: 56, right: 72 }
+        : { top: 80, bottom: 110, left: 430, right: 100 },
+      maxZoom: 15.6,
+      duration: 0,
+    });
+  }
+
   setupLazyLoad() {
+    if (!("IntersectionObserver" in window)) {
+      this.loadMapLibre();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -1389,13 +1551,13 @@ class MapLibreIntegration {
 
   initializeMap() {
     try {
-      const { lat, lng } = CONFIG.mapLocation;
+      const primary = this.locations[0];
 
       this.map = new maplibregl.Map({
         container: this.mapElement,
         style: "https://tiles.openfreemap.org/styles/fiord",
-        center: [lng, lat],
-        zoom: 16,
+        center: [primary.lng, primary.lat],
+        zoom: 14.5,
         // La atribución queda siempre visible: en un mapa a sangre completa
         // el botón compacto se come el texto legal y añade un control extra.
         attributionControl: { compact: false },
@@ -1440,65 +1602,57 @@ class MapLibreIntegration {
       });
 
       this.map.on("load", () => {
-        this.map.addSource("club-zone", {
+        this.map.addSource("club-zones", {
           type: "geojson",
           data: {
-            type: "Feature",
-            geometry: { type: "Point", coordinates: [lng, lat] },
+            type: "FeatureCollection",
+            features: this.locations.map((location) => ({
+              type: "Feature",
+              properties: { id: location.id },
+              geometry: {
+                type: "Point",
+                coordinates: [location.lng, location.lat],
+              },
+            })),
           },
         });
 
         this.map.addLayer({
-          id: "club-zone-fill",
+          id: "club-zones-fill",
           type: "circle",
-          source: "club-zone",
+          source: "club-zones",
           paint: {
-            "circle-radius": 34,
+            "circle-radius": 32,
             "circle-color": "#DB1A1A",
-            "circle-opacity": 0.18,
+            "circle-opacity": 0.12,
             "circle-stroke-color": "#DB1A1A",
-            "circle-stroke-width": 1.5,
-            "circle-stroke-opacity": 0.7,
+            "circle-stroke-width": 1.2,
+            "circle-stroke-opacity": 0.55,
           },
         });
 
-        const markerElement = document.createElement("div");
-        markerElement.className = "map-club-marker";
-        markerElement.innerHTML = `
-          <span class="map-club-marker-pin">
-            <svg viewBox="0 0 34 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M17 30L8.5 43.5L25.5 43.5L17 30Z" fill="#DB1A1A"/>
-              <rect x="2" y="2" width="30" height="30" fill="#DB1A1A" stroke="#FFFFFF" stroke-width="2"/>
-              <rect x="11" y="11" width="12" height="12" fill="#FFFFFF"/>
-            </svg>
-          </span>
-        `;
-
-        const popupHtml = `
-          <div class="map-popup-content">
-            <span class="map-popup-icon" aria-hidden="true"></span>
-            <div>
-              <p class="map-popup-title">Club Lobos Negros</p>
-              <p class="map-popup-address">Parque La Inmaculada<br>Calle 37c #5a-58, Barranquilla</p>
-            </div>
-          </div>
-        `;
-
-        const popup = new maplibregl.Popup({
-          offset: [0, -35],
+        this.popup = new maplibregl.Popup({
+          // Ancla explícita: con `offset` negativo y anclaje automático, el
+          // popup podía caer encima del pin en lugar de quedar por encima.
+          anchor: "bottom",
+          offset: [0, -52],
           className: "map-club-popup",
           closeButton: false,
-        }).setHTML(popupHtml);
+          // El encuadre lo controla flyTo; el auto-pan del popup competiría.
+          autoPan: false,
+        });
 
-        new maplibregl.Marker({ element: markerElement, anchor: "bottom" })
-          .setLngLat([lng, lat])
-          .setPopup(popup)
-          .addTo(this.map);
+        this.isLoaded = true;
+        this.locations.forEach((location) => this.createMarker(location));
+        this.fitLocations();
+        this.selectLocation(this.activeId, {
+          fly: false,
+          announce: false,
+          showPopup: false,
+        });
 
         this.hideMapLoading();
       });
-
-      this.isLoaded = true;
     } catch (error) {
       logger.error(`Failed to build MapLibre map: ${error.message}`);
       this.showFallback();

@@ -40,6 +40,22 @@
           "latitude": 10.94075,
           "longitude": -74.791333
         },
+        "location": {
+          "@type": "Place",
+          "name": "Cancha de Baloncesto Designado",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "Cra. 30 #27C-35",
+            "addressLocality": "Soledad",
+            "addressRegion": "Atlántico",
+            "addressCountry": "CO"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 10.9282632,
+            "longitude": -74.7741079
+          }
+        },
         "openingHoursSpecification": [
           {
             "@type": "OpeningHoursSpecification",
@@ -476,13 +492,33 @@
         </div>
         <div class="map-fallback">
           <p class="map-fallback-title">Mapa interactivo no disponible</p>
-          <p class="map-fallback-text">La dirección y el horario están en la tarjeta.</p>
+          <p class="map-fallback-text">Entrenamos en dos puntos:</p>
+          <ul class="map-fallback-list">
+            <li>
+              <strong>Parque La Inmaculada</strong><br />
+              Calle 37c #5a-58, Barrio Las Palmas, Barranquilla
+              <a href="https://www.google.com/maps/dir/?api=1&amp;destination=10.940750,-74.791333" target="_blank" rel="noopener noreferrer">Cómo llegar</a>
+            </li>
+            <li>
+              <strong>Cancha de Baloncesto Designado</strong><br />
+              Cra. 30 #27C-35, Soledad, Atlántico
+              <a href="https://www.google.com/maps/dir/?api=1&amp;destination=10.9282632,-74.7741079" target="_blank" rel="noopener noreferrer">Cómo llegar</a>
+            </li>
+          </ul>
         </div>
       </div>
       <div class="location-card">
-        <p class="location-eyebrow">Punto de entrenamiento</p>
-        <h2 class="location-title" id="location-title">Parque La Inmaculada</h2>
-        <p class="location-address">
+        <p class="location-eyebrow">Puntos de entrenamiento</p>
+        <div class="location-switcher" role="group" aria-label="Elegir punto de entrenamiento">
+          <button type="button" class="location-tab is-active" data-location="inmaculada" aria-pressed="true">
+            La Inmaculada
+          </button>
+          <button type="button" class="location-tab" data-location="soledad" aria-pressed="false">
+            Soledad
+          </button>
+        </div>
+        <h2 class="location-title" id="location-title" data-location-name>Parque La Inmaculada</h2>
+        <p class="location-address" data-location-address>
           Calle 37c #5a-58 · Barrio Las Palmas<br />
           Sur Oriente, Barranquilla, Atlántico
         </p>
@@ -490,12 +526,13 @@
           <p><span>Martes y jueves</span><strong>7:00–9:00 PM</strong></p>
           <p><span>Sábados y domingos</span><strong>8:00–10:00 AM</strong></p>
         </div>
-        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=10.940750,-74.791333" class="btn-directions" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.google.com/maps/dir/?api=1&amp;destination=10.940750,-74.791333" class="btn-directions" data-location-directions target="_blank" rel="noopener noreferrer">
           Cómo llegar
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true">
             <path d="M4 12h15M13 6l6 6-6 6" />
           </svg>
         </a>
+        <p class="visually-hidden" role="status" aria-live="polite" data-location-status></p>
       </div>
     </section>
   </main>
