@@ -530,7 +530,7 @@ class HeroParticles {
     this.pointer.lastX = x;
     this.pointer.lastY = y;
 
-    const amount = distance > 34 ? 4 : 3;
+    const amount = distance > 34 ? 2 : 1;
     const driftX = Math.max(-0.9, Math.min(0.9, (dx || 0) * 0.12));
     const driftY = Math.max(-0.9, Math.min(0.4, (dy || 0) * 0.1));
 

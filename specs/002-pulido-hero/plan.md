@@ -29,7 +29,7 @@ partícula nace y muere en alpha 0.
   Objetivo: 44 en móvil (con tamaño ×1,15), 52 en tablet y 72 en escritorio.
   Tamaño 3–8,5 px CSS y opacidad base 0,55–1; el factor de profundidad
   (0,75–1) deja un suelo efectivo de 0,41.
-- **Estela**: 3–4 por emisión, 3,2–6,2 px, opacidad 0,7–1, vida 0,9–1,5 s;
+- **Estela**: 1–2 por emisión, 3,2–6,2 px, opacidad 0,7–1, vida 0,9–1,5 s;
   nace en el puntero con la inercia del movimiento y sube lentamente.
 - **Ráfaga**: radial, sesgo ascendente, vida 0,8–1,6 s, fricción 0,94.
   26 partículas con ratón y 18 con tacto, 5–12 px y opacidad 0,9–1; la
@@ -53,7 +53,7 @@ Las partículas de estela/ráfaga se retiran con intercambio con la última
 - `pointermove` con `pointerType !== "touch"`, `(hover: hover) and
   (pointer: fine)` y sin movimiento reducido: techo duro de una emisión cada
   32 ms; dentro de él, emite si el puntero avanzó ≥ 16 px o pasaron ≥ 70 ms;
-  máximo 4 por evento.
+  máximo 2 por evento.
 - `pointerdown` (botón principal): ráfaga de 26 (ratón/lápiz) u 18 (tacto).
   En táctil no hay estela durante el scroll.
 - Repulsión radial de radio 220 px y fuerza 5, con decaimiento 0,88: el
@@ -98,7 +98,7 @@ dominaba la escena. Se subió la presencia sin añadir mecanismos nuevos:
 | Ambientales (móvil/tablet/escritorio) | 24/38/56 | 44/52/72 |
 | Tamaño ambiental | 1,2–4,6 px | 3–8,5 px (×1,15 en móvil) |
 | Opacidad efectiva ambiental | 0,13–0,60 | 0,41–1,00 |
-| Estela | 2–3 × 1–2,6 px | 3–4 × 3,2–6,2 px |
+| Estela | 2–3 × 1–2,6 px | 1–2 × 3,2–6,2 px |
 | Ráfaga | 12/8 × 1,2–4,2 px | 26/18 × 5–12 px |
 | Repulsión | radio 104, fuerza 0,45 | radio 220, fuerza 5,0 |
 
