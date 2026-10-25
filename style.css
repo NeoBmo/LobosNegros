@@ -14,29 +14,33 @@
 :root {
   /* Colores */
   --color-dark: #0A0A0C;           /* off-black, nunca negro puro */
+  --color-black: #000000;          /* sólo Beneficios, por decisión del propietario */
   --color-dark-surface: #141416;   /* superficie elevada sobre el dark */
   --color-white: #ffffff;
   --color-red: #DB1A1A;            /* único acento */
   --color-line: rgba(10, 10, 12, 0.1);
 
-  /* Tipografía */
-
+  /* Tipografía
+     Una sola escala: cuerpo (15–16px), apoyo (14px) y títulos de sección
+     fluidos. Los tamaños de tarjeta no inventan valores por su cuenta. */
   --font-title: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --font-display: var(--font-title);
   --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
   --fs-base: 1rem;
+  --fs-body: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
   --fs-lg: 1.25rem;
-  --fs-xl: clamp(1.125rem, 2vw + 0.5rem, 1.75rem);
-  --fs-2xl: clamp(1.375rem, 3vw + 0.5rem, 2.5rem);
-  --fs-display: clamp(2.2rem, 5vw + 1rem, 4.2rem);
+  --fs-xl: clamp(1.25rem, 1.2vw + 0.95rem, 1.5rem);
+  --fs-2xl: clamp(1.875rem, 3.2vw + 0.85rem, 2.9rem);
+  --fs-display: clamp(2.35rem, 5vw + 1rem, 4.6rem);
   --fw-medium: 500;
   --fw-semibold: 600;
   --fw-bold: 700;
   --fw-black: 800;
   --logo-size: clamp(1.75rem, 4vw + 0.75rem, 3.1rem);
   --logo-size-compact: clamp(1.25rem, 2vw - 0.25rem, 1.75rem);
+  --measure: 64ch;
 
   /* Escala de espaciado (múltiplos de 8px) */
   --space-2: 0.5rem;    /*  8px */
@@ -48,7 +52,7 @@
   --space-8: 4rem;      /* 64px */
 
   /* Layout */
-  --pad-y: clamp(4rem, 10vh, 6rem);
+  --pad-y: clamp(4.5rem, 9vh, 7rem);
   --pad-x: clamp(1rem, 4vw, 2rem);
   --container-max: 1200px;
 
@@ -56,9 +60,13 @@
   --t-base: 250ms ease;
   --t-slow: 500ms ease;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-scroll: cubic-bezier(0.65, 0, 0.35, 1);
 
   /* Sombras tintadas al fondo (nunca negro puro) */
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-card-soft: 0 1px 2px rgba(10, 10, 12, 0.05),
+    0 12px 32px -12px rgba(10, 10, 12, 0.12);
+  --shadow-card-hover: 0 22px 44px -18px rgba(10, 10, 12, 0.32);
   --shadow-hover: 0 18px 40px rgba(10, 10, 12, 0.22);
   --shadow-red: 0 8px 24px rgba(219, 26, 26, 0.35);
 }
@@ -90,13 +98,19 @@ body {
 }
 
 html {
-  scroll-behavior: smooth;
   overflow-x: hidden;
+}
+
+/* Con JS el desplazamiento lo controla Navigation (duración acotada y
+   cancelable). Sin JS se conserva el smooth nativo para las anclas. */
+html:not(.js) {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-body);
-  line-height: 1.6;
+  font-size: var(--fs-body);
+  line-height: 1.65;
   color: var(--color-dark);
   background: var(--color-white);
   overflow-x: hidden;
@@ -216,30 +230,57 @@ section[id] {
 }
 
 .section-title {
+  --title-line-scale: 1;
   font-family: var(--font-display);
   font-size: var(--fs-2xl);
   font-weight: var(--fw-black);
   font-style: italic;
+  line-height: 1.05;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.015em;
   text-align: center;
   color: var(--color-dark);
   position: relative;
   padding-bottom: var(--space-4);
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-7);
   text-wrap: balance;
 }
 
+/* La barra nace con el título y se enciende al interactuar. El brillo usa
+   box-shadow (compuesto) en vez de cambiar el tamaño o el layout. */
 .section-title::after {
   content: '';
   position: absolute;
   bottom: 0;
   left: 50%;
-  transform: translateX(-50%);
   width: 80px;
   height: 4px;
   background: var(--color-red);
   box-shadow: 0 4px 12px rgba(219, 26, 26, 0.3);
+  transform: translateX(-50%) scaleX(var(--title-line-scale));
+  transform-origin: center;
+  transition:
+    transform 600ms var(--ease-out) 120ms,
+    box-shadow 220ms ease,
+    background-color 220ms ease;
+}
+
+.section-title:hover::after,
+.section-title:active::after,
+.section-title:focus-within::after {
+  background: #f02a2a;
+  box-shadow:
+    0 0 16px rgba(219, 26, 26, 0.75),
+    0 4px 22px rgba(219, 26, 26, 0.55);
+}
+
+/* El estado inicial sólo se aplica con JS: sin JS la barra ya está dibujada. */
+html.js .section-title[data-aos] {
+  --title-line-scale: 0;
+}
+
+html.js .section-title[data-aos].aos-animate {
+  --title-line-scale: 1;
 }
 
 /* ============ 6. NAVBAR ============ */

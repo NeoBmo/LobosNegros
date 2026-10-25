@@ -42,6 +42,8 @@ class Navigation {
     this.downAccum = 0;
     this.hasShownNavbar = false;
     this.rafPending = false;
+    this.scrollRaf = null;
+    this.isAutoScrolling = false;
     this.init();
   }
 
@@ -104,6 +106,13 @@ class Navigation {
     }, 150));
 
     window.addEventListener("scroll", () => this.onScroll(), { passive: true });
+
+    // El desplazamiento propio no debe pelear con el usuario: rueda, tacto o
+    // teclado lo interrumpen de inmediato.
+    this.cancelScroll = this.cancelScroll.bind(this);
+    ["wheel", "touchstart", "keydown"].forEach((eventName) => {
+      window.addEventListener(eventName, this.cancelScroll, { passive: true });
+    });
   }
 
   onScroll() {
@@ -186,6 +195,8 @@ class Navigation {
   applyActiveLink(currentSectionId) {
     for (let i = 0; i < this.navLinks.length; i += 1) {
       const link = this.navLinks[i];
+      // El logotipo también desplaza, pero no participa del estado activo.
+      if (!link.classList.contains("nav-link")) continue;
       const isActive = link.getAttribute("href") === `#${currentSectionId}`;
       link.classList.toggle("active", isActive);
       if (isActive) {
@@ -196,13 +207,50 @@ class Navigation {
     }
   }
 
+  // Curva propia en lugar del `scroll-behavior: smooth` nativo: así el
+  // desplazamiento tiene una duración acotada y se puede cancelar. Es la
+  // sensación de las landing animadas sin cargar una librería de scroll.
   smoothScroll(element) {
-    const offsetTop = element.offsetTop - CONFIG.scrollOffset;
-    const behavior = this.reducedMotionQuery.matches ? "auto" : "smooth";
-    window.scrollTo({
-      top: offsetTop,
-      behavior
-    });
+    const targetY = Math.max(0, element.offsetTop - CONFIG.scrollOffset);
+    this.cancelScroll();
+
+    if (this.reducedMotionQuery.matches) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+
+    const startY = window.scrollY;
+    const distance = targetY - startY;
+    if (Math.abs(distance) < 2) return;
+
+    const duration = Math.min(950, Math.max(480, Math.abs(distance) * 0.45));
+    const startTime = performance.now();
+    const easeInOutCubic = (t) =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+    this.isAutoScrolling = true;
+    const step = (now) => {
+      if (!this.isAutoScrolling) return;
+      const progress = Math.min(1, (now - startTime) / duration);
+      window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+      if (progress < 1) {
+        this.scrollRaf = requestAnimationFrame(step);
+      } else {
+        this.isAutoScrolling = false;
+        this.scrollRaf = null;
+      }
+    };
+
+    this.scrollRaf = requestAnimationFrame(step);
+  }
+
+  cancelScroll() {
+    if (!this.isAutoScrolling) return;
+    this.isAutoScrolling = false;
+    if (this.scrollRaf) {
+      cancelAnimationFrame(this.scrollRaf);
+      this.scrollRaf = null;
+    }
   }
 
   toggleMenu() {
@@ -461,25 +509,41 @@ class HeroParticles {
 class AnimationObserver {
   constructor() {
     this.isSupported = "IntersectionObserver" in window;
+    this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.elements = Array.from(document.querySelectorAll("[data-aos]"));
+    this.observer = null;
+    this.timers = new WeakMap();
     this.init();
   }
 
   init() {
     if (!this.isSupported) {
-      this.initFallback();
+      this.revealAll();
       return;
     }
 
-    const elementsToAnimate = document.querySelectorAll("[data-aos]");
-    if (elementsToAnimate.length === 0) return;
+    // Con movimiento reducido no se oculta nada: el contenido nace visible y
+    // se evita depender del observer para leer la página.
+    if (this.reducedMotionQuery.matches) {
+      this.revealAll();
+      return;
+    }
 
-    const observer = new IntersectionObserver(
+    if (this.elements.length === 0) return;
+
+    this.observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             this.animateElement(entry.target);
-            observer.unobserve(entry.target);
+            return;
           }
+
+          // Al salir por arriba o por abajo se retira el estado final. Así la
+          // entrada se repite al volver a la sección, en ambas direcciones.
+          entry.target.classList.remove("aos-animate");
+          entry.target.style.willChange = "";
+          entry.target.style.transitionDelay = "";
         });
       },
       {
@@ -488,10 +552,12 @@ class AnimationObserver {
       }
     );
 
-    elementsToAnimate.forEach((el) => observer.observe(el));
+    this.elements.forEach((el) => this.observer.observe(el));
   }
 
   animateElement(element) {
+    if (element.classList.contains("aos-animate")) return;
+
     const delay = parseInt(element.getAttribute("data-aos-delay")) || 0;
     if (delay > 0) {
       element.style.transitionDelay = `${delay}ms`;
@@ -500,20 +566,26 @@ class AnimationObserver {
     const clearWillChange = () => {
       element.style.willChange = "";
       element.style.transitionDelay = "";
+      this.timers.delete(element);
     };
+
+    const previousTimer = this.timers.get(element);
+    if (previousTimer) clearTimeout(previousTimer);
 
     element.style.willChange = "opacity, transform";
     requestAnimationFrame(() => {
       element.classList.add("aos-animate");
       element.addEventListener("transitionend", clearWillChange, { once: true });
-      setTimeout(clearWillChange, delay + 600);
+      this.timers.set(element, setTimeout(clearWillChange, delay + 650));
     });
   }
 
+  revealAll() {
+    this.elements.forEach((el) => el.classList.add("aos-animate"));
+  }
+
   initFallback() {
-    document.querySelectorAll("[data-aos]").forEach((el) => {
-      el.classList.add("aos-animate");
-    });
+    this.revealAll();
   }
 }
 
