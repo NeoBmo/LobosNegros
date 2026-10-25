@@ -21,16 +21,19 @@ base, edad, vida y tiempos de fundido. La opacidad efectiva se calcula como
 `base × fundidoEntrada × fundidoSalida × profundidad`, de modo que toda
 partícula nace y muere en alpha 0.
 
-- **Ambiental**: nace en `y = alto + margen`, sube 0,2–0,7 px/frame con vaivén
-  lateral; vida 9–18 s; fundido de entrada 12 % y de salida 28 %. Al agotarse
-  se recicla en el borde inferior, sin salir del array.
-- **Estela**: 1–2 px, vida 0,8–1,4 s, nace en el puntero con la inercia del
+- **Ambiental**: nace en `y = alto + margen`, sube 0,22–0,72 px/frame con
+  vaivén lateral; vida 12–22 s; fundido de entrada 12 % y de salida 26 %. Al
+  agotarse se recicla en el borde inferior, sin salir del array. El campo
+  inicial se siembra a lo largo de la trayectoria de cada partícula (no en una
+  altura arbitraria), para que ya esté poblado y conserve sus fundidos.
+- **Estela**: 1–2,6 px, vida 0,8–1,4 s, nace en el puntero con la inercia del
   movimiento y sube lentamente.
-- **Ráfaga**: radial, sesgo ascendente, vida 0,6–1,2 s, fricción 0,93.
+- **Ráfaga**: radial, sesgo ascendente, vida 0,6–1,2 s, fricción 0,94.
 
 ### Cupo y reciclaje
 
-`maxParticles` = 200 escritorio, 140 tablet, 90 móvil. Al emitir:
+`maxParticles` = 200 con ancho ≥ 1024, 140 entre 600 y 1023, 90 por debajo de
+600. Al emitir:
 
 1. Si hay hueco, se añade.
 2. Si no, se busca la partícula con menor alpha efectivo.
@@ -42,11 +45,12 @@ Las partículas de estela/ráfaga se retiran con intercambio con la última
 ### Interacción
 
 - `pointermove` con `pointerType !== "touch"`, `(hover: hover) and
-  (pointer: fine)` y sin movimiento reducido: emite si el puntero avanzó ≥ 16
-  px o pasaron ≥ 70 ms; máximo 2 por evento.
+  (pointer: fine)` y sin movimiento reducido: techo duro de una emisión cada
+  32 ms; dentro de él, emite si el puntero avanzó ≥ 16 px o pasaron ≥ 70 ms;
+  máximo 2 por evento.
 - `pointerdown` (botón principal): ráfaga de 12 (ratón/lápiz) u 8 (tacto).
   En táctil no hay estela durante el scroll.
-- La repulsión existente se conserva atenuada (radio 110, fuerza 0,35) para
+- La repulsión existente se conserva atenuada (radio 104, fuerza 0,45) para
   que la estela no se sienta pegada.
 - Todos los listeners son pasivos y se retiran del juego cuando el hero no
   está visible.

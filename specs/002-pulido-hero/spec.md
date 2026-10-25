@@ -17,8 +17,9 @@ Debe sentirse vivo sin convertirse en un adorno costoso.
   tiempo para no inundar la escena.
 - **RF-04** — CUANDO se pulsa o toca el hero, EL SISTEMA emite una ráfaga
   radial con sesgo ascendente desde el punto de contacto.
-- **RF-05** — EL SISTEMA nunca supera las 200 partículas en escritorio, 140 en
-  tablet y 90 en móvil. Para hacer sitio recicla la partícula menos visible.
+- **RF-05** — EL SISTEMA nunca supera las 200 partículas con ancho ≥ 1024,
+  140 entre 600 y 1023, y 90 por debajo de 600. Para hacer sitio recicla la
+  partícula menos visible.
 - **RF-06** — SI no existe una partícula suficientemente desvanecida, ENTONCES
   EL SISTEMA omite la emisión en lugar de teletransportar una visible.
 - **RF-07** — CUANDO el hero sale del viewport o la pestaña pasa a segundo

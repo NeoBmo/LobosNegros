@@ -355,194 +355,408 @@ class HeroParticles {
   constructor() {
     this.canvas = document.getElementById("hero-particles");
     if (!this.canvas) return;
-    this.ctx = this.canvas.getContext("2d");
     this.hero = document.querySelector(".hero");
+    // `desynchronized` reduce la latencia del canvas sin cambiar el dibujo.
+    this.ctx = this.canvas.getContext("2d", { alpha: true, desynchronized: true });
+    if (!this.ctx) return;
+
     this.particles = [];
     this.animationFrameId = null;
+    this.visibilityObserver = null;
     this.isRunning = false;
+    this.isOnScreen = false;
     this.width = 0;
     this.height = 0;
-    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.mouse = { x: null, y: null, radius: 130, isHovering: false };
-    this.maxParticles = 64;
+    this.dpr = 1;
+    this.maxParticles = 200;
+    this.ambientTarget = 56;
     this.lastFrame = 0;
+    this.pointer = { x: null, y: null, lastX: 0, lastY: 0, lastAt: 0, hovering: false };
+    this.heroOrigin = { left: 0, top: 0 };
+    // Una sola función ligada: el bucle no asigna un cierre en cada frame.
+    this.renderFrame = (time) => this.render(time);
     this.reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    this.finePointerQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+
     this.init();
   }
 
   init() {
     this.setupCanvas();
-    this.createParticles();
+    this.measureLimits();
+    this.createAmbientField();
+    this.cacheHeroOrigin();
     this.attachEventListeners();
     this.setupVisibilityObserver();
+    this.applyMotionPreference();
   }
 
   setupCanvas() {
-    const rect = this.hero ? this.hero.getBoundingClientRect() : { width: window.innerWidth, height: window.innerHeight };
-    this.width = rect.width;
-    this.height = rect.height;
-    this.canvas.width = this.width * this.dpr;
-    this.canvas.height = this.height * this.dpr;
-    this.ctx.scale(this.dpr, this.dpr);
+    const width = this.hero ? this.hero.clientWidth : window.innerWidth;
+    const height = this.hero ? this.hero.clientHeight : window.innerHeight;
+    this.width = Math.max(1, width);
+    this.height = Math.max(1, height);
+    this.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas.width = Math.round(this.width * this.dpr);
+    this.canvas.height = Math.round(this.height * this.dpr);
+    this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    // Asignar canvas.width reinicia el estado del contexto.
+    this.ctx.fillStyle = "#DB1A1A";
   }
 
-  createParticles() {
-    this.particles = [];
-    // Menos base que antes (hasta 90): el canvas se paga en cada frame y las
-    // ráfagas añaden el movimiento extra cuando el usuario interactúa.
+  measureLimits() {
     const narrow = this.width < 600;
-    const count = narrow ? 18 : this.width < 1024 ? 28 : 42;
-    this.maxParticles = narrow ? 36 : this.width < 1024 ? 48 : 64;
-    const minSize = 1.5;
-    const maxSize = 5.0;
+    const tablet = this.width < 1024;
+    this.maxParticles = narrow ? 90 : tablet ? 140 : 200;
+    this.ambientTarget = narrow ? 24 : tablet ? 38 : 56;
+  }
 
-    for (let i = 0; i < count; i++) {
-      const size = Math.random() * (maxSize - minSize) + minSize;
-      const depth = (size - minSize) / (maxSize - minSize);
-      const alpha = 0.35 + depth * 0.85;
-      this.particles.push({
-        x: Math.random() * this.width,
-        y: Math.random() * this.height,
-        size,
-        depth,
-        baseVy: -(0.25 + depth * 0.7),
-        vx: 0,
-        vy: 0,
-        alpha,
-        // El color no cambia nunca. Antes se armaba una cadena nueva por
-        // particula y frame (~90 por frame, unas 5400 por segundo).
-        color: `rgba(219, 26, 26, ${alpha})`,
-        staticColor: `rgba(219, 26, 26, ${alpha * 0.7})`,
-        sinOffset: Math.random() * Math.PI * 2,
-        sinSpeed: 0.01 + (1 - depth) * 0.015,
-        sinAmp: 0.2 + depth * 0.35,
-        life: 0,
-        age: 0,
-        burst: false,
-      });
+  createAmbientField() {
+    this.particles = [];
+    for (let i = 0; i < this.ambientTarget; i += 1) {
+      this.particles.push(this.createAmbient(true));
     }
   }
 
-  burst(x, y, count) {
+  createAmbient(initial = false) {
+    const depth = Math.random();
+    const life = 12000 + Math.random() * 10000;
+    const vy = -(0.22 + depth * 0.5);
+    const baseX = Math.random() * this.width;
+    const particle = {
+      type: "ambient",
+      x: baseX,
+      baseX,
+      y: this.height + 12,
+      vx: 0,
+      vy,
+      ox: 0,
+      oy: 0,
+      size: 1.2 + depth * 3.4,
+      depth,
+      baseAlpha: 0.24 + depth * 0.36,
+      life,
+      age: 0,
+      fadeIn: life * 0.12,
+      fadeOut: life * 0.26,
+      sway: 0.12 + Math.random() * 0.28,
+      swaySpeed: 0.00016 + Math.random() * 0.00024,
+      swayOffset: Math.random() * Math.PI * 2,
+    };
+
+    if (initial) {
+      // Se siembra a lo largo de su propia trayectoria, no en una altura
+      // arbitraria: así el campo ya está poblado y cada partícula conserva su
+      // fundido de entrada y salida.
+      const travelPerMs = Math.abs(vy) / 16.67;
+      const minAge = life * 0.14;
+      const maxAge = Math.min(life * 0.8, (this.height - 10) / travelPerMs);
+      particle.age = maxAge > minAge
+        ? minAge + Math.random() * (maxAge - minAge)
+        : minAge;
+      particle.y = this.height + 12 - travelPerMs * particle.age;
+    }
+    return particle;
+  }
+
+  addParticle(particle) {
+    if (this.particles.length < this.maxParticles) {
+      this.particles.push(particle);
+      return true;
+    }
+
+    // El cupo incluye el campo ambiental. Para no hacer desaparecer el fondo,
+    // sólo se reciclan partículas de interacción ya casi invisibles: un corte
+    // a la vista se notaría más que omitir una emisión.
+    let candidate = -1;
+    let lowest = 0.22;
+    for (let i = 0; i < this.particles.length; i += 1) {
+      const current = this.particles[i];
+      if (current.type === "ambient") continue;
+      const alpha = this.alphaOf(current);
+      if (alpha < lowest) {
+        lowest = alpha;
+        candidate = i;
+      }
+    }
+
+    if (candidate === -1) return false;
+    this.particles[candidate] = particle;
+    return true;
+  }
+
+  burst(x, y, amount) {
     if (this.reducedMotionQuery.matches) return;
 
-    for (let i = 0; i < count; i += 1) {
-      // Si se llena el cupo, se retira una partícula ambiental antigua en vez
-      // de dejar crecer el array sin límite.
-      if (this.particles.length >= this.maxParticles) {
-        const ambientIndex = this.particles.findIndex((p) => !p.burst);
-        if (ambientIndex === -1) break;
-        this.particles.splice(ambientIndex, 1);
-      }
-
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 0.9 + Math.random() * 2.6;
-      const size = 1.5 + Math.random() * 3;
-      const alpha = 0.7 + Math.random() * 0.3;
-      this.particles.push({
+    for (let i = 0; i < amount; i += 1) {
+      // Sesgo ascendente: la ráfaga acompaña la dirección del campo.
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.7;
+      const speed = 0.6 + Math.random() * 2.4;
+      this.addParticle({
+        type: "burst",
         x,
         y,
-        size,
-        depth: 1,
-        baseVy: 0,
         vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        alpha,
-        color: `rgba(255, 58, 58, ${alpha})`,
-        staticColor: `rgba(255, 58, 58, ${alpha * 0.7})`,
-        sinOffset: Math.random() * Math.PI * 2,
-        sinSpeed: 0.02,
-        sinAmp: 0.15,
-        life: 700 + Math.random() * 700,
+        vy: Math.sin(angle) * speed - 0.2,
+        ox: 0,
+        oy: 0,
+        size: 1.2 + Math.random() * 3,
+        depth: 0.4 + Math.random() * 0.6,
+        baseAlpha: 0.65 + Math.random() * 0.3,
+        life: 620 + Math.random() * 620,
         age: 0,
-        burst: true,
+        fadeIn: 90,
+        fadeOut: 380,
+        sway: 0,
+        swaySpeed: 0,
+        swayOffset: 0,
       });
     }
+    this.ensureRunning();
+  }
 
-    if (!this.isRunning && this.hero) {
-      const rect = this.hero.getBoundingClientRect();
-      if (rect.top < window.innerHeight && rect.bottom > 0) this.start();
+  emitTrail(x, y, dx, dy) {
+    if (this.reducedMotionQuery.matches || !this.finePointerQuery.matches) return;
+
+    const now = performance.now();
+    // Techo duro de ~30 emisiones por segundo, además del gate por distancia:
+    // un barrido rápido no debe llenar el cupo de golpe.
+    if (now - this.pointer.lastAt < 32) return;
+    const distance = Math.hypot(x - this.pointer.lastX, y - this.pointer.lastY);
+    if (now - this.pointer.lastAt < 70 && distance < 16) return;
+    this.pointer.lastAt = now;
+    this.pointer.lastX = x;
+    this.pointer.lastY = y;
+
+    const amount = distance > 46 ? 2 : 1;
+    const driftX = Math.max(-0.9, Math.min(0.9, (dx || 0) * 0.12));
+    const driftY = Math.max(-0.9, Math.min(0.4, (dy || 0) * 0.1));
+
+    for (let i = 0; i < amount; i += 1) {
+      this.addParticle({
+        type: "trail",
+        x: x + (Math.random() - 0.5) * 6,
+        y: y + (Math.random() - 0.5) * 6,
+        vx: driftX + (Math.random() - 0.5) * 0.3,
+        vy: driftY - 0.12 - Math.random() * 0.2,
+        ox: 0,
+        oy: 0,
+        size: 1 + Math.random() * 1.6,
+        depth: 0.55 + Math.random() * 0.45,
+        baseAlpha: 0.26 + Math.random() * 0.32,
+        life: 800 + Math.random() * 600,
+        age: 0,
+        fadeIn: 140,
+        fadeOut: 430,
+        sway: 0,
+        swaySpeed: 0,
+        swayOffset: 0,
+      });
     }
+    this.ensureRunning();
+  }
+
+  alphaOf(particle) {
+    let fadeIn = particle.fadeIn ? particle.age / particle.fadeIn : 1;
+    let fadeOut = particle.fadeOut ? (particle.life - particle.age) / particle.fadeOut : 1;
+    fadeIn = fadeIn > 1 ? 1 : fadeIn < 0 ? 0 : fadeIn;
+    fadeOut = fadeOut > 1 ? 1 : fadeOut < 0 ? 0 : fadeOut;
+    const depth = 0.55 + particle.depth * 0.45;
+    return particle.baseAlpha
+      * (fadeIn * fadeIn * (3 - 2 * fadeIn))
+      * (fadeOut * fadeOut * (3 - 2 * fadeOut))
+      * depth;
+  }
+
+  resetAmbient(particle) {
+    const depth = Math.random();
+    const life = 12000 + Math.random() * 10000;
+    particle.age = 0;
+    particle.baseX = Math.random() * this.width;
+    particle.x = particle.baseX;
+    particle.y = this.height + 10 + Math.random() * 26;
+    particle.ox = 0;
+    particle.oy = 0;
+    particle.depth = depth;
+    particle.size = 1.2 + depth * 3.4;
+    particle.vy = -(0.22 + depth * 0.5);
+    particle.baseAlpha = 0.24 + depth * 0.36;
+    particle.life = life;
+    particle.fadeIn = life * 0.12;
+    particle.fadeOut = life * 0.26;
+    particle.sway = 0.12 + Math.random() * 0.28;
+    particle.swaySpeed = 0.00016 + Math.random() * 0.00024;
+    particle.swayOffset = Math.random() * Math.PI * 2;
   }
 
   attachEventListeners() {
-    window.addEventListener("resize", throttle(() => {
-      this.setupCanvas();
-      this.createParticles();
-      // setupCanvas borra el canvas al reasignar canvas.width. Con movimiento
-      // reducido no hay rAF que repinte, asi que el lienzo se quedaba en
-      // blanco para siempre tras cualquier cambio de tamano de ventana.
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        this.renderStaticFrame();
-      }
-    }, 200), { passive: true });
-    if (!this.hero) return;
-    this.hero.addEventListener("mousemove", (e) => {
-      const rect = this.hero.getBoundingClientRect();
-      this.mouse.x = e.clientX - rect.left;
-      this.mouse.y = e.clientY - rect.top;
-      this.mouse.isHovering = true;
-    }, { passive: true });
-    this.hero.addEventListener("mouseleave", () => { this.mouse.isHovering = false; this.mouse.x = null; this.mouse.y = null; }, { passive: true });
-    this.hero.addEventListener("touchmove", (e) => {
-      if (e.touches.length > 0) {
-        const rect = this.hero.getBoundingClientRect();
-        this.mouse.x = e.touches[0].clientX - rect.left;
-        this.mouse.y = e.touches[0].clientY - rect.top;
-        this.mouse.isHovering = true;
-      }
-    }, { passive: true });
-    this.hero.addEventListener("touchend", () => { this.mouse.isHovering = false; this.mouse.x = null; this.mouse.y = null; }, { passive: true });
+    window.addEventListener("resize", throttle(() => this.handleResize(), 200), { passive: true });
 
-    // Ratón y tacto comparten `pointerdown`; una pulsación secundaria no
-    // dispara la ráfaga.
+    this.reducedMotionQuery.addEventListener?.("change", () => this.applyMotionPreference());
+
+    document.addEventListener("visibilitychange", () => this.syncRunState());
+
+    if (!this.hero) return;
+
+    // Sólo el puntero fino deja estela; el táctil únicamente genera ráfaga al
+    // tocar, para no inundar la escena mientras se hace scroll.
+    this.hero.addEventListener("pointermove", (event) => {
+      if (event.pointerType === "touch") return;
+      const point = this.pointFromEvent(event);
+      const dx = this.pointer.x === null ? 0 : point.x - this.pointer.x;
+      const dy = this.pointer.y === null ? 0 : point.y - this.pointer.y;
+      this.pointer.x = point.x;
+      this.pointer.y = point.y;
+      this.pointer.hovering = true;
+      this.emitTrail(point.x, point.y, dx, dy);
+    }, { passive: true });
+
+    this.hero.addEventListener("pointerleave", () => {
+      this.pointer.hovering = false;
+      this.pointer.x = null;
+      this.pointer.y = null;
+      this.pointer.lastX = 0;
+      this.pointer.lastY = 0;
+      this.pointer.lastAt = 0;
+    }, { passive: true });
+
+    this.hero.addEventListener("pointercancel", () => {
+      this.pointer.hovering = false;
+      this.pointer.x = null;
+      this.pointer.y = null;
+    }, { passive: true });
+
+    this.hero.addEventListener("pointerup", (event) => {
+      if (event.pointerType === "touch") this.pointer.hovering = false;
+    }, { passive: true });
+
+    // Ratón, lápiz y tacto comparten `pointerdown`; una pulsación secundaria
+    // no dispara la ráfaga.
     this.hero.addEventListener("pointerdown", (event) => {
       if (event.button !== 0) return;
-      const rect = this.hero.getBoundingClientRect();
-      const amount = event.pointerType === "touch" ? 8 : 11;
-      this.burst(event.clientX - rect.left, event.clientY - rect.top, amount);
+      const point = this.pointFromEvent(event);
+      this.pointer.x = point.x;
+      this.pointer.y = point.y;
+      this.pointer.lastX = point.x;
+      this.pointer.lastY = point.y;
+      this.pointer.lastAt = performance.now();
+      this.pointer.hovering = event.pointerType !== "touch";
+      this.burst(point.x, point.y, event.pointerType === "touch" ? 8 : 12);
     }, { passive: true });
+  }
 
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) {
-        this.stop();
-      } else if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        const rect = this.hero ? this.hero.getBoundingClientRect() : null;
-        const isOnScreen = rect && rect.top < window.innerHeight && rect.bottom > 0;
-        if (isOnScreen && !this.isRunning) this.start();
+  cacheHeroOrigin() {
+    if (!this.hero) return;
+    const rect = this.hero.getBoundingClientRect();
+    // Coordenadas de documento: el puntero se convierte sin medir el layout en
+    // cada evento.
+    this.heroOrigin.left = rect.left;
+    this.heroOrigin.top = rect.top + window.scrollY;
+  }
+
+  pointFromEvent(event) {
+    return {
+      x: event.clientX - this.heroOrigin.left,
+      y: event.clientY - (this.heroOrigin.top - window.scrollY),
+    };
+  }
+
+  handleResize() {
+    this.setupCanvas();
+    this.measureLimits();
+    this.cacheHeroOrigin();
+    this.rebalanceAmbientField();
+    // El canvas acaba de vaciarse: las transitorias quedan fuera de sus
+    // posiciones y se descartan en lugar de reaparecer descolocadas.
+    this.particles = this.particles.filter((particle) => particle.type === "ambient");
+    if (this.reducedMotionQuery.matches) this.renderStaticFrame();
+  }
+
+  rebalanceAmbientField() {
+    let ambient = 0;
+    for (let i = 0; i < this.particles.length; i += 1) {
+      if (this.particles[i].type === "ambient") ambient += 1;
+    }
+
+    while (ambient < this.ambientTarget) {
+      this.particles.push(this.createAmbient(false));
+      ambient += 1;
+    }
+
+    // Si el viewport se estrecha, se retiran las ambientales del final. Las
+    // nuevas nacen fuera del lienzo, así que el cambio no produce un corte.
+    while (ambient > this.ambientTarget) {
+      let index = -1;
+      for (let i = this.particles.length - 1; i >= 0; i -= 1) {
+        if (this.particles[i].type === "ambient") {
+          index = i;
+          break;
+        }
       }
-    });
+      if (index === -1) break;
+      this.particles.splice(index, 1);
+      ambient -= 1;
+    }
   }
 
   setupVisibilityObserver() {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    if (!("IntersectionObserver" in window) || !this.hero) {
+      this.isOnScreen = true;
+      this.syncRunState();
+      return;
+    }
+
+    this.visibilityObserver = new IntersectionObserver((entries) => {
+      for (let i = 0; i < entries.length; i += 1) {
+        this.isOnScreen = entries[i].isIntersecting;
+      }
+      this.syncRunState();
+    }, { threshold: 0 });
+
+    this.visibilityObserver.observe(this.hero);
+  }
+
+  syncRunState() {
+    if (this.reducedMotionQuery.matches || !this.isOnScreen || document.hidden) {
+      this.stop();
+      return;
+    }
+    this.start();
+  }
+
+  ensureRunning() {
+    if (!this.isRunning) this.syncRunState();
+  }
+
+  applyMotionPreference() {
+    if (this.reducedMotionQuery.matches) {
+      this.stop();
       this.renderStaticFrame();
       return;
     }
-    if (!("IntersectionObserver" in window) || !this.hero) {
-      this.start();
-      return;
-    }
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => { entry.isIntersecting ? this.start() : this.stop(); });
-    }, { threshold: 0.05 });
-    observer.observe(this.hero);
+    this.syncRunState();
   }
 
   renderStaticFrame() {
     this.ctx.clearRect(0, 0, this.width, this.height);
-    for (let i = 0; i < this.particles.length; i++) {
+    this.ctx.fillStyle = "#DB1A1A";
+    for (let i = 0; i < this.particles.length; i += 1) {
       const p = this.particles[i];
-      this.ctx.fillStyle = p.staticColor;
-      this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+      if (p.type !== "ambient") continue;
+      const alpha = this.alphaOf(p);
+      if (alpha <= 0.004) continue;
+      const sway = Math.sin(p.swayOffset + p.age * p.swaySpeed) * p.sway;
+      this.ctx.globalAlpha = alpha;
+      this.ctx.fillRect(p.baseX + sway - p.size / 2, p.y - p.size / 2, p.size, p.size);
     }
+    this.ctx.globalAlpha = 1;
   }
 
   start() {
-    if (this.isRunning) return;
+    if (this.isRunning || this.reducedMotionQuery.matches || !this.isOnScreen || document.hidden) return;
     this.isRunning = true;
     this.lastFrame = 0;
-    this.render();
+    this.animationFrameId = requestAnimationFrame(this.renderFrame);
   }
 
   stop() {
@@ -555,63 +769,75 @@ class HeroParticles {
 
   render(timestamp) {
     if (!this.isRunning) return;
+
     const now = timestamp || performance.now();
     const delta = this.lastFrame ? Math.min(now - this.lastFrame, 50) : 16.67;
     this.lastFrame = now;
     const step = delta / 16.67;
     const friction = Math.pow(0.94, step);
+    const pushDecay = Math.pow(0.9, step);
+    const pointerX = this.pointer.hovering && this.pointer.x !== null ? this.pointer.x : -1;
+    const pointerY = this.pointer.hovering && this.pointer.y !== null ? this.pointer.y : -1;
 
     this.ctx.clearRect(0, 0, this.width, this.height);
+    this.ctx.fillStyle = "#DB1A1A";
 
     for (let i = this.particles.length - 1; i >= 0; i -= 1) {
       const p = this.particles[i];
+      p.age += delta;
 
-      // Las partículas de ráfaga viven un tiempo acotado y se retiran del
-      // array; las ambientales se reciclan al salir por arriba.
-      if (p.burst) {
-        p.age += delta;
-        if (p.age >= p.life) {
-          this.particles.splice(i, 1);
+      if (p.type === "ambient") {
+        // La vida acaba con el fundido de salida en cero: el reinicio en el
+        // borde inferior no se ve.
+        if (p.age >= p.life || p.y < -20) {
+          this.resetAmbient(p);
           continue;
         }
+        p.y += p.vy * step;
+        p.x = p.baseX + Math.sin(p.swayOffset + p.age * p.swaySpeed) * p.sway;
+      } else {
+        if (p.age >= p.life) {
+          // Intercambio con la última: retirar del array sin desplazar el
+          // resto ni dejar huecos.
+          const last = this.particles.pop();
+          if (i < this.particles.length) this.particles[i] = last;
+          continue;
+        }
+        p.x += p.vx * step;
+        p.y += p.vy * step;
+        p.vx *= friction;
+        p.vy *= friction;
       }
 
-      p.sinOffset += p.sinSpeed * step;
-      p.x += (p.vx + Math.sin(p.sinOffset) * p.sinAmp) * step;
-      p.y += (p.baseVy + p.vy) * step;
-
-      if (this.mouse.isHovering && this.mouse.x !== null) {
-        const dx = p.x - this.mouse.x;
-        const dy = p.y - this.mouse.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < this.mouse.radius && dist > 0) {
-          const force = (this.mouse.radius - dist) / this.mouse.radius;
-          const angle = Math.atan2(dy, dx);
-          p.vx += Math.cos(angle) * force * 0.7 * step;
-          p.vy += Math.sin(angle) * force * 0.7 * step;
+      // Repulsión suave como desplazamiento que decae: no altera la
+      // trayectoria base de las ambientales.
+      if (pointerX !== -1) {
+        const dx = p.x - pointerX;
+        const dy = p.y - pointerY;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 104 && distance > 0.001) {
+          const force = (1 - distance / 104) * 0.45 * step;
+          p.ox += (dx / distance) * force;
+          p.oy += (dy / distance) * force;
         }
       }
+      p.ox *= pushDecay;
+      p.oy *= pushDecay;
 
-      p.vx *= friction;
-      p.vy *= friction;
+      const alpha = this.alphaOf(p);
+      if (alpha < 0.004) continue;
 
-      if (!p.burst) {
-        if (p.y < -15) {
-          p.y = this.height + 15;
-          p.x = Math.random() * this.width;
-          p.vx = 0;
-          p.vy = 0;
-        }
-        if (p.x < -20) p.x = this.width + 20;
-        if (p.x > this.width + 20) p.x = -20;
-      }
-
-      if (p.burst) this.ctx.globalAlpha = Math.max(0, 1 - p.age / p.life);
-      this.ctx.fillStyle = p.color;
-      this.ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
-      if (p.burst) this.ctx.globalAlpha = 1;
+      this.ctx.globalAlpha = alpha;
+      this.ctx.fillRect(
+        p.x + p.ox - p.size / 2,
+        p.y + p.oy - p.size / 2,
+        p.size,
+        p.size
+      );
     }
-    this.animationFrameId = requestAnimationFrame((frameTime) => this.render(frameTime));
+
+    this.ctx.globalAlpha = 1;
+    this.animationFrameId = requestAnimationFrame(this.renderFrame);
   }
 }
 
