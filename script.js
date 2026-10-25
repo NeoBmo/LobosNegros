@@ -369,7 +369,8 @@ class HeroParticles {
     this.height = 0;
     this.dpr = 1;
     this.maxParticles = 200;
-    this.ambientTarget = 56;
+    this.ambientTarget = 72;
+    this.sizeScale = 1;
     this.lastFrame = 0;
     this.pointer = { x: null, y: null, lastX: 0, lastY: 0, lastAt: 0, hovering: false };
     this.heroOrigin = { left: 0, top: 0 };
@@ -408,7 +409,8 @@ class HeroParticles {
     const narrow = this.width < 600;
     const tablet = this.width < 1024;
     this.maxParticles = narrow ? 90 : tablet ? 140 : 200;
-    this.ambientTarget = narrow ? 24 : tablet ? 38 : 56;
+    this.ambientTarget = narrow ? 44 : tablet ? 52 : 72;
+    this.sizeScale = narrow ? 1.15 : 1;
   }
 
   createAmbientField() {
@@ -432,13 +434,13 @@ class HeroParticles {
       vy,
       ox: 0,
       oy: 0,
-      size: 1.2 + depth * 3.4,
+      size: (3 + depth * 5.5) * this.sizeScale,
       depth,
-      baseAlpha: 0.24 + depth * 0.36,
+      baseAlpha: 0.55 + depth * 0.45,
       life,
       age: 0,
-      fadeIn: life * 0.12,
-      fadeOut: life * 0.26,
+      fadeIn: life * 0.1,
+      fadeOut: life * 0.24,
       sway: 0.12 + Math.random() * 0.28,
       swaySpeed: 0.00016 + Math.random() * 0.00024,
       swayOffset: Math.random() * Math.PI * 2,
@@ -491,7 +493,7 @@ class HeroParticles {
     for (let i = 0; i < amount; i += 1) {
       // Sesgo ascendente: la ráfaga acompaña la dirección del campo.
       const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.7;
-      const speed = 0.6 + Math.random() * 2.4;
+      const speed = 0.5 + Math.random() * 1.8;
       this.addParticle({
         type: "burst",
         x,
@@ -500,13 +502,13 @@ class HeroParticles {
         vy: Math.sin(angle) * speed - 0.2,
         ox: 0,
         oy: 0,
-        size: 1.2 + Math.random() * 3,
+        size: 5 + Math.random() * 7,
         depth: 0.4 + Math.random() * 0.6,
-        baseAlpha: 0.65 + Math.random() * 0.3,
-        life: 620 + Math.random() * 620,
+        baseAlpha: 0.9 + Math.random() * 0.1,
+        life: 800 + Math.random() * 800,
         age: 0,
-        fadeIn: 90,
-        fadeOut: 380,
+        fadeIn: 60,
+        fadeOut: 460,
         sway: 0,
         swaySpeed: 0,
         swayOffset: 0,
@@ -528,7 +530,7 @@ class HeroParticles {
     this.pointer.lastX = x;
     this.pointer.lastY = y;
 
-    const amount = distance > 46 ? 2 : 1;
+    const amount = distance > 34 ? 4 : 3;
     const driftX = Math.max(-0.9, Math.min(0.9, (dx || 0) * 0.12));
     const driftY = Math.max(-0.9, Math.min(0.4, (dy || 0) * 0.1));
 
@@ -541,13 +543,13 @@ class HeroParticles {
         vy: driftY - 0.12 - Math.random() * 0.2,
         ox: 0,
         oy: 0,
-        size: 1 + Math.random() * 1.6,
+        size: 3.2 + Math.random() * 3,
         depth: 0.55 + Math.random() * 0.45,
-        baseAlpha: 0.26 + Math.random() * 0.32,
-        life: 800 + Math.random() * 600,
+        baseAlpha: 0.7 + Math.random() * 0.3,
+        life: 900 + Math.random() * 600,
         age: 0,
-        fadeIn: 140,
-        fadeOut: 430,
+        fadeIn: 120,
+        fadeOut: 450,
         sway: 0,
         swaySpeed: 0,
         swayOffset: 0,
@@ -561,7 +563,7 @@ class HeroParticles {
     let fadeOut = particle.fadeOut ? (particle.life - particle.age) / particle.fadeOut : 1;
     fadeIn = fadeIn > 1 ? 1 : fadeIn < 0 ? 0 : fadeIn;
     fadeOut = fadeOut > 1 ? 1 : fadeOut < 0 ? 0 : fadeOut;
-    const depth = 0.55 + particle.depth * 0.45;
+    const depth = 0.75 + particle.depth * 0.25;
     return particle.baseAlpha
       * (fadeIn * fadeIn * (3 - 2 * fadeIn))
       * (fadeOut * fadeOut * (3 - 2 * fadeOut))
@@ -578,12 +580,12 @@ class HeroParticles {
     particle.ox = 0;
     particle.oy = 0;
     particle.depth = depth;
-    particle.size = 1.2 + depth * 3.4;
+    particle.size = (3 + depth * 5.5) * this.sizeScale;
     particle.vy = -(0.22 + depth * 0.5);
-    particle.baseAlpha = 0.24 + depth * 0.36;
+    particle.baseAlpha = 0.55 + depth * 0.45;
     particle.life = life;
-    particle.fadeIn = life * 0.12;
-    particle.fadeOut = life * 0.26;
+    particle.fadeIn = life * 0.1;
+    particle.fadeOut = life * 0.24;
     particle.sway = 0.12 + Math.random() * 0.28;
     particle.swaySpeed = 0.00016 + Math.random() * 0.00024;
     particle.swayOffset = Math.random() * Math.PI * 2;
@@ -641,7 +643,7 @@ class HeroParticles {
       this.pointer.lastY = point.y;
       this.pointer.lastAt = performance.now();
       this.pointer.hovering = event.pointerType !== "touch";
-      this.burst(point.x, point.y, event.pointerType === "touch" ? 8 : 12);
+      this.burst(point.x, point.y, event.pointerType === "touch" ? 18 : 26);
     }, { passive: true });
   }
 
@@ -775,7 +777,7 @@ class HeroParticles {
     this.lastFrame = now;
     const step = delta / 16.67;
     const friction = Math.pow(0.94, step);
-    const pushDecay = Math.pow(0.9, step);
+    const pushDecay = Math.pow(0.88, step);
     const pointerX = this.pointer.hovering && this.pointer.x !== null ? this.pointer.x : -1;
     const pointerY = this.pointer.hovering && this.pointer.y !== null ? this.pointer.y : -1;
 
@@ -815,8 +817,8 @@ class HeroParticles {
         const dx = p.x - pointerX;
         const dy = p.y - pointerY;
         const distance = Math.hypot(dx, dy);
-        if (distance < 104 && distance > 0.001) {
-          const force = (1 - distance / 104) * 0.45 * step;
+        if (distance < 220 && distance > 0.001) {
+          const force = (1 - distance / 220) * 5 * step;
           p.ox += (dx / distance) * force;
           p.oy += (dy / distance) * force;
         }

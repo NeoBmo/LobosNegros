@@ -33,6 +33,16 @@ Debe sentirse vivo sin convertirse en un adorno costoso.
   (listeners pasivos, sin `preventDefault`).
 - **RF-10** — EL SISTEMA no crea cadenas de color ni objetos por frame, no usa
   `filter: blur()` y mantiene el coste por frame acotado por el cupo.
+- **RF-11** — EL SISTEMA mantiene el rojo visible a simple vista en escritorio y
+  móvil: ninguna partícula ambiental baja de 3 px CSS (3,45 px en móvil), su
+  opacidad efectiva nunca cae por debajo de 0,4 y el campo móvil usa un tamaño
+  ligeramente mayor para compensar la pantalla pequeña.
+- **RF-12** — CUANDO el puntero se acerca a una partícula, EL SISTEMA la
+  desplaza radialmente dentro de un radio de 220 px y la devuelve a su
+  trayectoria al alejarse, sin alterar la posición base del campo.
+- **RF-13** — CUANDO se pulsa o toca el hero, EL SISTEMA emite una ráfaga
+  compacta y brillante (18–26 partículas de 5–12 px) que se abre en anillo por
+  la repulsión y se desvanece sola.
 
 ## Criterios de aceptación
 
@@ -52,6 +62,10 @@ Debe sentirse vivo sin convertirse en un adorno costoso.
    layout.
 8. El promedio de frames durante una interacción sostenida se mantiene en
    ~60 fps en escritorio (y por encima de 50 fps con CPU 4× más lenta).
+9. El rojo se percibe sin esfuerzo en 1440 y en 390: las partículas no son
+   puntos invisibles y el campo móvil no se ve ralo.
+10. La repulsión abre un hueco visible alrededor del puntero y la ráfaga de un
+    clic se lee como un golpe de rojo, no como un puñado de motas.
 
 ## Fuera de alcance
 

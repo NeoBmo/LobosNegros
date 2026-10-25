@@ -11,6 +11,7 @@ Estados: `pendiente` → `en_progreso` → `implementada` → `validada`.
 | T-05 | Entrada escalonada uniforme de la firma | `style.css` | `implementada` |
 | T-06 | Pruebas de responsive, fps, cupo, reduced-motion y no-JS | todos | `implementada` |
 | T-07 | Revisión cruzada y cierre | `MEMORY.md` | `validada` |
+| T-08 | Presencia visual: tamaño, rojo, ráfaga y repulsión | `script.js` | `validada` |
 
 ## Evidencia (Chrome headless, servidor local, 2026-10-25)
 
@@ -62,6 +63,32 @@ Medición con `document.getAnimations()` congelado en el tiempo:
 
 Ruta local: `C:\Users\BMO\AppData\Local\Temp\opencode\`.
 
+### Presencia visual (revisión del 2026-10-25)
+
+- 1440×900: 72 ambientales; en reposo ~63 `fillRect` por frame. El campo se
+  ve rojo y de tamaños variados, sin quitar protagonismo a la firma.
+- 500 clics + 500 `pointermove` sincrónicos: máximo **200** dibujos en un
+  frame (cupo 200). Nunca se supera.
+- 390×844 con DPR 3 y viewport real emulado: 44 ambientales, tamaño ×1,15.
+  500 toques seguidos: máximo **89** dibujos (cupo 90). Un toque deja un
+  grupo compacto y brillante que se abre en anillo por la repulsión.
+- 768×1024 DPR 2: 52 ambientales, sin overflow horizontal.
+- Repulsión: radio 220 px y fuerza 5; el puntero abre un hueco visible en el
+  campo y la ráfaga de un clic se lee como un golpe de rojo.
+- CPU 4× más lenta a 1440: 75,6 fps de media (p95 21,2 ms) durante 240
+  frames; sin throttling el mismo entorno mide 76,9–82,2 fps, así que el
+  coste del campo no explica la diferencia.
+- Hero fuera del viewport: **0** dibujos en 1,2 s; al volver, 2.922 en 600 ms.
+- Reduced motion: 0 dibujos en 1,5 s tras el fotograma estático; el canvas
+  conserva 3.388 píxeles pintados y el texto queda visible.
+- Consola limpia, `node --check` correcto, sin overflow a 390/768/1440.
+
+### Capturas de la revisión
+
+- `hero-1440-final.png`, `hero-390-v9.png`, `hero-768-v9.png`.
+- Repulsión: `hero-1440-hover-v4.png`; ráfaga: `hero-1440-burst-v6.png` y
+  `hero-390-tap-v9.png`.
+
 ## Revisión cruzada
 
 - Revisor: `opencode/mimo-v2.6-flash-free` (familia MiMo, distinta de la
@@ -75,6 +102,20 @@ Ruta local: `C:\Users\BMO\AppData\Local\Temp\opencode\`.
   (≥1024 / 600–1023 / <600) en spec y plan; las cifras del plan se alinearon
   con el código; `pointerdown` ya no exime la siguiente estela del techo de
   32 ms. El throttle de resize es preexistente y compartido; no se tocó.
+
+### Revisión del ajuste de presencia (T-08)
+
+- Revisor: `opencode/beam-free#high` (familia Beam, distinta de DeepSeek).
+- Veredicto: **APROBADO**, sin bloqueantes.
+- Verificado: cupo 200/140/90 (no se supera en `addParticle`, `burst`,
+  `emitTrail` ni `resize`); `sizeScale` inicializado antes de `measureLimits`
+  y usado en `createAmbient`/`resetAmbient`; suelo de alpha 0,4125; repulsión
+  sólo sobre `ox/oy` con equilibrio ~42 px y sin tocar `baseX`; ráfaga
+  26/18 y estela 3–4 con el táctil excluido; `applyMotionPreference` sigue
+  dibujando el fotograma estático; RF-11/12/13 y la tabla Antes/Después
+  coinciden con el código.
+- Observación menor: el revisor no pudo ejecutar `node --check` por permisos
+  de shell; el worker sí lo ejecutó con resultado correcto.
 
 ## Pendiente
 
