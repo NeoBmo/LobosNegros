@@ -13,7 +13,7 @@ La validación requiere revisión y evidencia en navegador.
 | T-06 | Servicios: bento asimétrico, sombras y tilt 3D | `style.css`, `script.js` | `implementada` | `7f8051c` |
 | T-07 | Beneficios y Testimonios: negro absoluto, acordeón, elevación y escala | `style.css`, `script.js` | `implementada` | `7f8051c` |
 | T-08 | Mapa: dos sedes seleccionables, tarjeta sincronizada y fallback | `index.html`, `style.css`, `script.js` | `implementada` | `9c5140a` |
-| T-09 | Rendimiento, responsive, reduced-motion, no-JS y revisión final | todos | `en_progreso` | — |
+| T-09 | Rendimiento, responsive, reduced-motion, no-JS y revisión final | todos | `validada` | `55b2602` |
 
 ## Evidencia
 
@@ -35,7 +35,13 @@ en `http://127.0.0.1:8001/`.
 - Beneficios: fondo `#000000`, borde rojo interior sólo en el elemento activo;
   el cuerpo abierto mide 128 px de 152 px de scroll y no recorta el párrafo.
 - Testimonios: 8 diapositivas (4 + clones), escalas medidas 0.945 / 0.984 / 1,
-  tarjeta completa visible sin recortes.
+  tarjeta completa visible sin recortes. En hover la tarjeta sube 6 px, la
+  sombra pasa de `rgba(10,10,12,0.12)` a `rgba(10,10,12,0.38)` y el marquee se
+  detiene (`is-running` retirado).
+- Hero: el clic en la firma aumenta los píxeles pintados del canvas de 160 a
+  220 (muestreo cada 4 px) sin errores en consola.
+- Título de sección: en hover la barra pasa de sombra `rgba(219,26,26,0.3)` a
+  `rgba(219,26,26,0.75)` + `rgba(219,26,26,0.55)` y el rojo se aviva.
 - Mapa: dos marcadores y dos pestañas sincronizadas (nombre, dirección y enlace
   de indicaciones). Vista inicial con `fitBounds`; al elegir sede, `flyTo` y
   popup por encima del pin. A 861 px la tarjeta va superpuesta sin tapar el pin;
@@ -49,3 +55,18 @@ en `http://127.0.0.1:8001/`.
 
 El veredicto del reviewer se registra al final, antes de marcar T-09 como
 `validada`.
+
+## Revisión
+
+- Veredicto: `APROBADO` (2026-10-25), reviewer de familia `glm`
+  (`opencode/glm-5.3-flash-free#high`), distinta de la del implementer
+  (`deepseek`). Rango revisado: `2ea07f0..55b2602`.
+- Sin hallazgos bloqueantes. Observaciones menores: el `backdrop-filter` del
+  `menu-scrim` ya existía antes de la tanda y los `filter: blur()` de hover en
+  tarjetas fueron eliminados; la repulsión de partículas por cursor es previa
+  y compatible con la interacción pedida.
+- El reviewer no pudo reejecutar el runtime con JS por límites de sus
+  herramientas; el implementer repitió en vivo el burst del hero, el brillo
+  del título y la elevación/pausa de testimonios antes de cerrar.
+- Los artefactos de captura que dejó la revisión se eliminaron; el árbol quedó
+  limpio.
