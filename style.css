@@ -273,7 +273,7 @@ section[id] {
   transform: translateX(-50%) scaleX(var(--title-line-scale));
   transform-origin: center;
   transition:
-    transform 600ms var(--ease-out) 120ms,
+    transform 500ms var(--ease-out) 100ms,
     box-shadow 220ms ease,
     background-color 220ms ease;
 }
@@ -1762,7 +1762,7 @@ button:focus-visible,
   .about-text p {
     max-width: 62ch;
     margin-inline: auto;
-    text-align: left;
+    text-align: center;
   }
 
   .about-image {
