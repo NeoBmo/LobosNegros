@@ -233,9 +233,9 @@ class Navigation {
     }
   }
 
-  // Curva propia en lugar del `scroll-behavior: smooth` nativo: así el
-  // desplazamiento tiene una duración acotada y se puede cancelar. Es la
-  // sensación de las landing animadas sin cargar una librería de scroll.
+  // Curva ease-out (similar al default de GSAP, power1.out): arranca rápido y
+  // frena al final, lo que se percibe ágil pero sin brusquedad. Duración
+  // acotada y cancelable: la sensación de las landing animadas sin librería.
   smoothScroll(element) {
     const targetY = Math.max(0, element.offsetTop - CONFIG.scrollOffset);
     this.cancelScroll();
@@ -249,16 +249,17 @@ class Navigation {
     const distance = targetY - startY;
     if (Math.abs(distance) < 2) return;
 
-    const duration = Math.min(950, Math.max(480, Math.abs(distance) * 0.45));
+    const duration = Math.min(800, Math.max(420, Math.abs(distance) * 0.4));
     const startTime = performance.now();
-    const easeInOutCubic = (t) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    // Curva tipo ease-out (similar al default de GSAP, power1.out): arranca
+    // rápido y frena al final; se percibe ágil pero sin brusquedad.
+    const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
     this.isAutoScrolling = true;
     const step = (now) => {
       if (!this.isAutoScrolling) return;
       const progress = Math.min(1, (now - startTime) / duration);
-      window.scrollTo(0, startY + distance * easeInOutCubic(progress));
+      window.scrollTo(0, startY + distance * easeOutCubic(progress));
       if (progress < 1) {
         this.scrollRaf = requestAnimationFrame(step);
       } else {
