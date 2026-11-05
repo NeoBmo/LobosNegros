@@ -278,10 +278,12 @@ svg {
 }
 
 .hero-line-first {
+  font-size: min(calc((100vw - var(--gutter) * 2) / 1.724), 25vh);
   font-size: min(calc((100vw - var(--gutter) * 2) / 1.724), 25svh);
 }
 
 .hero-line-second {
+  font-size: min(calc((100vw - var(--gutter) * 2) / 2.153), 20vh);
   font-size: min(calc((100vw - var(--gutter) * 2) / 2.153), 20svh);
 }
 
@@ -446,15 +448,6 @@ html:not(.js) .milestones {
   transform: scaleX(-1);
 }
 
-.results {
-  margin-top: 2rem;
-}
-
-.results li {
-  padding-block: 0.8rem;
-  border-top: 2px solid currentColor;
-}
-
 /* Keuman */
 .schedule {
   margin-top: 2.25rem;
@@ -542,6 +535,7 @@ html:not(.js) .map-panel {
 
 .map {
   position: relative;
+  height: 62vh;
   height: 62svh;
   min-height: 21rem;
   max-height: 36rem;
@@ -658,6 +652,14 @@ html:not(.js) .map-panel {
   border-color: var(--blood);
 }
 
+/* MapLibre redondea con clases propias, que le ganan al `*` de la base. */
+.map .maplibregl-ctrl-group,
+.map .maplibregl-ctrl-group button,
+.map .maplibregl-ctrl.maplibregl-ctrl-attrib,
+.map .maplibregl-ctrl-attrib-button {
+  border-radius: 0;
+}
+
 .map .maplibregl-ctrl-group {
   background: var(--night);
   border: 1px solid var(--line);
@@ -723,6 +725,13 @@ html:not(.js) .footer {
   padding-bottom: calc(2rem + var(--action-height) + env(safe-area-inset-bottom, 0px));
 }
 
+/* La acción fija no debe tapar el elemento que recibe el foco con el teclado. */
+@media (max-width: 768px) {
+  html {
+    scroll-padding-bottom: calc(var(--action-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+}
+
 /* 7. Pantallas grandes: base provisional hasta diseñar su propia experiencia. */
 @media (min-width: 769px) {
   :root {
@@ -779,10 +788,12 @@ html:not(.js) .footer {
   }
 
   .hero-line-first {
+    font-size: min(20vw, 34vh);
     font-size: min(20vw, 34svh);
   }
 
   .hero-line-second {
+    font-size: min(16vw, 27.3vh);
     font-size: min(16vw, 27.3svh);
   }
 

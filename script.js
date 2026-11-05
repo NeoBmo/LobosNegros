@@ -50,7 +50,7 @@ class InkStroke {
 
     // Fuera de pantalla no se hace ningún trabajo de tinta.
     new IntersectionObserver((entries) => {
-      this.isNear = entries[0].isIntersecting;
+      this.isNear = entries.at(-1).isIntersecting;
       this.requestDraw();
     }).observe(this.canvas);
 
@@ -192,7 +192,7 @@ class InkStroke {
     });
 
     this.clear();
-    this.draw();
+    if (this.isNear) this.draw();
   }
 
   clear() {
@@ -272,7 +272,7 @@ class ThumbAction {
     if (!action || !visit) return;
 
     new IntersectionObserver(
-      ([entry]) => action.classList.toggle("is-hidden", entry.isIntersecting),
+      (entries) => action.classList.toggle("is-hidden", entries.at(-1).isIntersecting),
       { rootMargin: "0px 0px -35% 0px" }
     ).observe(visit);
   }
@@ -309,6 +309,7 @@ class MapLibreIntegration {
 
     this.map = null;
     this.isReady = false;
+    this.hasFailed = false;
     this.view = "both";
     this.markers = new Map();
     this.buttons = Array.from(this.panel.querySelectorAll("[data-map-view]"));
@@ -404,6 +405,9 @@ class MapLibreIntegration {
   }
 
   build() {
+    // Si el aviso ya salió, un script que llega tarde no debe construir nada.
+    if (this.hasFailed) return;
+
     try {
       this.map = new maplibregl.Map({
         container: this.element,
@@ -457,6 +461,7 @@ class MapLibreIntegration {
     element.type = "button";
     element.className = "map-pin";
     element.setAttribute("aria-label", `Ver ${name} en el mapa`);
+    element.classList.toggle("is-active", id === this.view);
     element.setAttribute("aria-pressed", String(id === this.view));
     element.innerHTML = `
       <span class="map-pin-label"></span>
@@ -481,6 +486,8 @@ class MapLibreIntegration {
   fail() {
     window.clearTimeout(this.timeout);
     if (this.isReady) return;
+    this.hasFailed = true;
+    this.map?.remove();
     this.panel.classList.add("is-failed");
     this.status.hidden = false;
     this.status.textContent = "El mapa no cargó. Aquí tienes las dos direcciones.";
