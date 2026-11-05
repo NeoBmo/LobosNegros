@@ -655,6 +655,8 @@ html:not(.js) .map-panel {
 /* MapLibre redondea con clases propias, que le ganan al `*` de la base. */
 .map .maplibregl-ctrl-group,
 .map .maplibregl-ctrl-group button,
+.map .maplibregl-ctrl-group button:focus:first-child,
+.map .maplibregl-ctrl-group button:focus:last-child,
 .map .maplibregl-ctrl.maplibregl-ctrl-attrib,
 .map .maplibregl-ctrl-attrib-button {
   border-radius: 0;
