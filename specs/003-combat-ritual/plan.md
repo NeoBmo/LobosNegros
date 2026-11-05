@@ -18,8 +18,13 @@
   action. The decision can be revisited if real content grows.
 - **Location data lives in markup.** `data-*` attributes feed the map, ending the
   duplication that caused the mixed location names.
-- **Keep MapLibre.** Reuse `selectLocation`, `applyBrandPalette` and lazy loading
-  from the current `MapLibreIntegration`, pinned to an exact version.
+- **Keep MapLibre and its dark top-down view.** Reuse `selectLocation`,
+  `fitLocations`, `applyBrandPalette` and lazy loading from the current
+  `MapLibreIntegration`, pinned to an exact version. Add pin labels and a control
+  that returns to both locations. Satellite imagery is not included: it needs
+  another tile provider with its own terms.
+- **Embed the fonts in `style.css`.** Subset WOFF2 as base64 keeps three files,
+  works over `file://` and sends no visitor data to a font service.
 
 ## Files
 
@@ -32,9 +37,9 @@
 
 ## Risks
 
-- **Fonts differ on phones.** Arial Black and Georgia are not on Android, so the
-  prototype's screenshots do not represent most visitors. The type must be tested
-  with Roboto-like metrics and on a real device.
+- **Embedded fonts add weight.** Subsetting keeps each font small, but base64
+  inflates it by about a third and leaves a long block in `style.css`. The block
+  stays at the end of the file, and the budget is checked in T6.
 - **Ink cost on low-end phones.** Mitigated by a capped device pixel ratio,
   incremental painting and stopping off screen; measured with CPU throttling.
 - **The page depends on real content.** With little history, Trajectory and Combat

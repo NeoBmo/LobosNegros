@@ -61,8 +61,11 @@ labels; the Spanish text always carries the meaning.
   block. Colors come from CSS through `currentColor`.
 - **RF-08** — EL SISTEMA does not depend on logo details for layout: if the logo
   changes composition, only documented `viewBox` values may need adjusting.
-- **RF-09** — EL SISTEMA uses system fonts only and adds no new hues beyond the
-  black, white and red palette and its existing red shades.
+- **RF-09** — EL SISTEMA uses its chosen open-license fonts, subset and embedded
+  in `style.css`, so it makes no font requests to third parties and renders the
+  same on Android, iOS and desktop. If a font fails, it falls back to system
+  fonts without hiding text. It adds no new hues beyond the black, white and red
+  palette and its existing red shades.
 - **RF-10** — EL SISTEMA replaces the empty photo box and the empty member
   squares; it never shows "Próximamente" or blank placeholders.
 
@@ -106,13 +109,28 @@ labels; the Spanish text always carries the meaning.
 ### Technical limits
 
 - **RF-23** — EL SISTEMA consists of `index.html`, `style.css` and `script.js`,
-  with no build step, framework, dependency or webfont, and works over `file://`.
+  with no build step, framework or dependency, and works over `file://`.
 - **RF-24** — EL SISTEMA keeps MapLibre as the only external runtime, lazy-loaded,
   at a pinned version.
-- **RF-25** — EL SISTEMA keeps the three files at 60 KB or less gzipped combined,
-  excluding the map and photographs.
+- **RF-25** — EL SISTEMA keeps the three files at 90 KB or less gzipped combined,
+  fonts and logo included, excluding the map and photographs.
 - **RF-26** — EL SISTEMA keeps valid SEO data: title, description, canonical URL
   and JSON-LD consistent with the visible content.
+
+### Interactive map
+
+- **RF-27** — EL SISTEMA closes the page with an interactive top-down map, branded
+  in the club's palette, showing both locations at once when it first appears.
+- **RF-28** — EL SISTEMA labels each pin with its location name, visible without
+  tapping it.
+- **RF-29** — CUANDO the visitor picks a location from its button or its pin, EL
+  SISTEMA moves the map to it and updates its name, address and directions link.
+- **RF-30** — CUANDO the visitor asks to see both locations, EL SISTEMA returns to
+  the framing that shows Barranquilla and Soledad together.
+- **RF-31** — MIENTRAS the visitor scrolls past the map on a phone, EL SISTEMA does
+  not capture the one-finger scroll.
+- **RF-32** — SI the map cannot load, ENTONCES EL SISTEMA shows both addresses
+  with their directions links.
 
 ## Acceptance criteria
 
@@ -128,6 +146,9 @@ labels; the Spanish text always carries the meaning.
    screen and the scroll feel.
 10. Replacing the `<symbol>` content updates every use of the logo.
 11. Nothing unconfirmed is published; open items below are resolved or omitted.
+12. At 390 x 844 the map shows both labeled pins on arrival, and a visitor can go
+    to either location and back to both.
+13. The embedded fonts render with no third-party font requests.
 
 ## Open items owned by the club
 
