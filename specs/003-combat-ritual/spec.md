@@ -109,7 +109,8 @@ labels; the Spanish text always carries the meaning.
 ### Technical limits
 
 - **RF-23** — EL SISTEMA consists of `index.html`, `style.css` and `script.js`,
-  with no build step, framework or dependency, and works over `file://`.
+  with no build step, framework or dependency, and works over `file://`. Real
+  photographs are the only exception: they live in a separate `img/` folder.
 - **RF-24** — EL SISTEMA keeps MapLibre as the only external runtime, lazy-loaded,
   at a pinned version.
 - **RF-25** — EL SISTEMA keeps the three files at 90 KB or less gzipped combined,
@@ -119,18 +120,20 @@ labels; the Spanish text always carries the meaning.
 
 ### Interactive map
 
-- **RF-27** — EL SISTEMA closes the page with an interactive top-down map, branded
-  in the club's palette, showing both locations at once when it first appears.
+- **RF-27** — EL SISTEMA closes the page with an interactive flat top-down map,
+  with no pitch, rotation or 3D layers, branded in the club's palette, showing both
+  locations at once when it first appears.
 - **RF-28** — EL SISTEMA labels each pin with its location name, visible without
   tapping it.
 - **RF-29** — CUANDO the visitor picks a location from its button or its pin, EL
-  SISTEMA moves the map to it and updates its name, address and directions link.
+  SISTEMA moves the map to it and highlights its always-visible name, address and
+  directions link.
 - **RF-30** — CUANDO the visitor asks to see both locations, EL SISTEMA returns to
   the framing that shows Barranquilla and Soledad together.
 - **RF-31** — MIENTRAS the visitor scrolls past the map on a phone, EL SISTEMA does
   not capture the one-finger scroll.
-- **RF-32** — SI the map cannot load, ENTONCES EL SISTEMA shows both addresses
-  with their directions links.
+- **RF-32** — SI the map cannot load, ENTONCES EL SISTEMA says so and keeps both
+  addresses visible with their directions links.
 
 ## Acceptance criteria
 
@@ -162,6 +165,8 @@ labels; the Spanish text always carries the meaning.
 
 ## Out of scope
 
+- The distinct wide-screen experience. It starts after the owner approves the
+  phone experience; until then wide screens get a working provisional layout.
 - Publishing, merging into `main` or changing the Netlify deployment.
 - Designing the new logo.
 - Writing the club's history; the club provides the facts.
