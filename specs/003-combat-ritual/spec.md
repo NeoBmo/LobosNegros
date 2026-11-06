@@ -155,7 +155,7 @@ labels; the Spanish text always carries the meaning.
 
 ## Open items owned by the club
 
-- Logo rebrand. The current SVG comes from a low-resolution image.
+- Approval of the proposed logo. The previous SVG came from a low-resolution image.
 - History of the group: origin, founders, years and milestones.
 - Combat results and what distinguishes the club's fighting.
 - Real photographs, with guardian consent for minors.
@@ -168,5 +168,4 @@ labels; the Spanish text always carries the meaning.
 - The distinct wide-screen experience. It starts after the owner approves the
   phone experience; until then wide screens get a working provisional layout.
 - Publishing, merging into `main` or changing the Netlify deployment.
-- Designing the new logo.
 - Writing the club's history; the club provides the facts.

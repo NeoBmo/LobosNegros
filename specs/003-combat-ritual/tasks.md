@@ -12,6 +12,7 @@ States: `pendiente` → `en_progreso` → `implementada` → `validada`.
 | T6 | Fallbacks, SEO, JSON-LD and budgets | RF-02, 18, 19, 23, 25, 26 | validada |
 | T7 | Full verification, `reviewer` pass and local notes | All | validada |
 | T8 | Luis reviews on a real Android phone | Criterion 9 | pendiente |
+| T9 | New brand (mark, icon, lockups) and Libre Franklin as reading type | RF-07, 08 | implementada |
 
 ## Review
 

@@ -29,8 +29,10 @@
   the owner wants a plain flat view. Satellite imagery is not included.
 - **Embed the fonts in `style.css`.** Subset WOFF2 as base64 keeps three files,
   works over `file://` and sends no visitor data to a font service. The owner chose
-  League Gothic, Black Han Sans and Source Serif 4. The serif ships in one weight,
-  saving about 14 KB: emphasis comes from League Gothic.
+  League Gothic and Black Han Sans. Source Serif 4 was rejected after review and
+  replaced by Libre Franklin: it descends from Benton's Franklin Gothic, as League
+  Gothic descends from his Alternate Gothic, so both share a skeleton. It ships in one
+  weight: emphasis comes from League Gothic.
 
 ## Files
 
@@ -51,8 +53,8 @@
 - **The page depends on real content.** The draft uses only facts the owner stated
   or the previous site published, with no dates or results. The teacher's form
   confirms or replaces each one before anything is published.
-- **The logo will change.** Hero composition is tuned to the current wolf, so it
-  must be reviewed once the rebrand lands.
+- **The logo is a proposal.** The straight-cut wolf needs the club's approval. It
+  replaces the two symbols in `index.html`, so reverting it stays one commit.
 - **Photos need a separate folder.** The owner approved `img/`; it is created
   when real photos exist. `.gitignore` notes must be updated then.
 
