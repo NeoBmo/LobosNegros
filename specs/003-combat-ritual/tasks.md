@@ -12,11 +12,11 @@ States: `pendiente` → `en_progreso` → `implementada` → `validada`.
 | T6 | Fallbacks, SEO, JSON-LD and budgets | RF-02, 18, 19, 23, 25, 26 | validada |
 | T7 | Full verification, `reviewer` pass and local notes | All | validada |
 | T8 | Luis reviews on a real Android phone | Criterion 9 | pendiente |
-| T9 | New brand (mark, icon, lockups) and Libre Franklin as reading type | RF-07, 08 | implementada |
+| T9 | New brand (mark, icon, lockups) and Libre Franklin as reading type | RF-07, 08 | validada |
 
 ## Review
 
-Verdict: APROBADO by `reviewer` on commit `256fa54`, after a first CAMBIOS_NECESARIOS
+Verdict: APROBADO by `reviewer` on commit `9f3c7a6` for T9, and on `256fa54`, after a first CAMBIOS_NECESARIOS
 pass. Its finding about the Soledad location name was rejected: "Parque Designado" is
 the owner's own decision, pending confirmation of the official name.
 
