@@ -681,6 +681,14 @@ html:not(.js) .map-panel {
   filter: invert(1);
 }
 
+/* MapLibre marca el foco con un halo azul propio: se cambia por el del sitio.
+   Va hacia dentro para que el borde del grupo no lo recorte. */
+.map .maplibregl-ctrl.maplibregl-ctrl-group button:focus-visible {
+  box-shadow: none;
+  outline: 3px solid var(--dobok);
+  outline-offset: -3px;
+}
+
 /* La atribución es obligatoria: se mantiene legible y dentro del tema. */
 .map .maplibregl-ctrl.maplibregl-ctrl-attrib {
   background: rgb(10 10 12 / 0.82);
