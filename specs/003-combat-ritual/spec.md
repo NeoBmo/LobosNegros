@@ -47,7 +47,8 @@ labels; the Spanish text always carries the meaning.
   390 x 844 with real content and the map included.
 - **RF-03** — MIENTRAS the visitor is on a viewport of 768px or less, EL SISTEMA
   keeps a WhatsApp action reachable by thumb at the bottom of the screen,
-  respecting the safe area, and hides it once the Visit section is visible.
+  respecting the safe area, and moves it aside only while the Visit section's own
+  WhatsApp action is visible.
 - **RF-04** — EL SISTEMA gives every interactive target at least 44 x 44 CSS px.
 - **RF-05** — EL SISTEMA stays legible and keeps its hierarchy with the font
   stacks of Android and iOS, not only those of Windows.
