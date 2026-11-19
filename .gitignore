@@ -10,6 +10,7 @@ MEMORY.md
 
 # Salidas de herramientas
 .mcp-validator/
+.playwright-mcp/
 
 # Sistema
 .DS_Store
