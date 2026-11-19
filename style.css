@@ -730,15 +730,15 @@ html:not(.js) .map-panel {
   text-underline-offset: 4px;
 }
 
-/* Sin JS la acción del pulgar nunca se oculta: el pie necesita su espacio. */
-html:not(.js) .footer {
-  padding-bottom: calc(2rem + var(--action-height) + env(safe-area-inset-bottom, 0px));
-}
-
-/* La acción fija no debe tapar el elemento que recibe el foco con el teclado. */
+/* La acción fija no debe tapar el elemento que recibe el foco con el teclado.
+   Al final de la página vuelve a estar visible, así que el pie le deja su sitio. */
 @media (max-width: 768px) {
   html {
     scroll-padding-bottom: calc(var(--action-height) + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+
+  .footer {
+    padding-bottom: calc(2rem + var(--action-height) + env(safe-area-inset-bottom, 0px));
   }
 }
 

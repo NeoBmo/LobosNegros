@@ -268,13 +268,19 @@ class InkStroke {
 class ThumbAction {
   constructor() {
     const action = document.querySelector("[data-thumb-action]");
-    const visit = document.getElementById("visit");
-    if (!action || !visit) return;
+    // Se observa el botón de WhatsApp de Visita y no la sección entera: así la
+    // barra sólo se aparta mientras el otro botón está a la vista, y vuelve en
+    // el mapa y las sedes, donde ya no hay otro WhatsApp en pantalla.
+    const visitAction = document.querySelector("#visit .cta");
+    if (!action || !visitAction) return;
 
+    // Con medio botón a la vista: si no, la barra se apartaría cuando el otro
+    // apenas asoma un píxel. `isIntersecting` no sirve aquí, porque es cierto
+    // desde el primer píxel aunque haya umbral.
     new IntersectionObserver(
-      (entries) => action.classList.toggle("is-hidden", entries.at(-1).isIntersecting),
-      { rootMargin: "0px 0px -35% 0px" }
-    ).observe(visit);
+      (entries) => action.classList.toggle("is-hidden", entries.at(-1).intersectionRatio >= 0.5),
+      { threshold: 0.5 }
+    ).observe(visitAction);
   }
 }
 
