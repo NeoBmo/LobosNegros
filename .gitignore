@@ -1,5 +1,6 @@
-# El repositorio contiene unicamente los tres documentos del sitio:
-# index.html, style.css y script.js. Todo lo demas es de trabajo local.
+# El sitio son tres documentos: index.html, style.css y script.js.
+# El repositorio lleva ademas su documentacion: README.md y specs/.
+# Todo lo demas es de trabajo local.
 
 # Documentos de trabajo del entorno de desarrollo. Son utiles en esta
 # maquina, pero no forman parte del sitio y no deben viajar al repositorio.

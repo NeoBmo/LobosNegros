@@ -8,7 +8,7 @@ Está pensada para el teléfono, porque casi todas las visitas llegan desde uno.
 README describe el rediseño de `specs/003-combat-ritual/`, que aún espera su prueba
 en un Android real.
 
-<!-- TODO: captura del hero a 390 px y a 1440 px. El repo sólo admite como archivos extra las fotos de img/: decidir dónde va antes de añadirla. -->
+<!-- TODO: captura del hero a 390 px y a 1440 px. Los únicos archivos extra del sitio son las fotos de img/: decidir dónde va antes de añadirla. -->
 
 ## El recorrido
 
